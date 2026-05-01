@@ -18,6 +18,8 @@ import {
   Check,
   Target,
   Power,
+  X,
+  Menu,
   MapPin,
   Settings,
   Clock,
@@ -29,8 +31,10 @@ import {
   Camera
 } from 'lucide-react';
 
+// 页面类型定义
 type Page = 'home' | 'solution' | 'careers';
 
+// 枫叶图标组件
 const MapleLeaf = ({ className = '' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
     <path d="M12,2L13,5L16,4L15,7L18,7L16,9L19,12L16,13L17,16L14,15L14,18L12,17L10,18L10,15L7,16L8,13L5,12L8,9L6,7L9,7L8,4L11,5L12,2Z" />
@@ -41,19 +45,25 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // 滚动监听
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 路由跳转
   const goToPage = (p: Page) => { 
-    setCurrentPage(p); 
+    setCurrentPage(p);
+    setMobileMenuOpen(false);
     window.scrollTo(0, 0); 
   };
   
+  // 锚点跳转
   const scrollToAnchor = (id: string) => {
+    setMobileMenuOpen(false);
     if (currentPage !== 'home') { 
       goToPage('home'); 
       setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 120); 
@@ -66,6 +76,7 @@ export default function App() {
     setFormSubmitted(true);
   };
 
+  // 通用特性卡片组件
   const FeatureCard = ({ title, desc, note, icon: Icon, dark = false }: any) => (
     <div className={`p-10 rounded-[40px] ${dark ? 'bg-white/5 border border-white/10 text-center' : 'bg-red-50/30 border border-red-100 flex flex-col hover:shadow-2xl'} transition-all duration-500`}>
       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 shadow-lg shrink-0 ${dark ? 'text-red-400' : 'bg-red-600 text-white'}`}>
@@ -94,7 +105,7 @@ export default function App() {
           <h1 className="text-[44px] sm:text-7xl md:text-[88px] font-black tracking-[-0.07em] leading-[1.1] sm:leading-[0.95] mb-10">加拿大本地 Mac 真机<br/><span className="text-red-600">用真实设备 做真实业务</span></h1>
           <div className="mt-8 max-w-4xl mx-auto space-y-8 px-4">
             <p className="text-xl sm:text-3xl leading-relaxed text-black/70 font-bold">专为 {['TikTok 美区直播', '跨境账号运营', '支付后台远程运维'].map((s, i) => <React.Fragment key={i}><span className="text-[#1d1d1f] underline decoration-red-400 decoration-4 underline-offset-8">{s}</span>{i < 2 ? '、' : ''}</React.Fragment>)} 设计</p>
-            <div className="py-8 border-y border-black/5 mt-12"><p className="text-lg sm:text-2xl text-red-700 font-black mb-4">非虚拟机 · 非代理 · 非数据中心 IP</p><p className="text-md sm:text-lg text-black/40 font-bold leading-relaxed">每个客户独享一台加拿大本地 Mac 真机，绑定一条独立 ISP 网络与一个独立静态住宅 IP<br/>从设备、网络、IP 三个底层维度，降低因虚拟化环境、代理链路或数据中心 IP 标记带来的环境不确定性。</p></div>
+            <div className="py-8 border-y border-black/5 mt-12"><p className="text-lg sm:text-2xl text-red-700 font-black mb-4">非虚拟机 · 非代理 · 非数据中心 IP</p><p className="text-md sm:text-lg text-black/40 font-bold leading-relaxed">每个客户独享一台加拿大本地 Mac 真机，绑定一条独立 ISP 网络与一个独立静态住宅 IP<br/>从底层降低因“虚拟化环境”或“数据中心 IP 标记”带来的环境不确定性</p></div>
           </div>
           <div className="mt-16 flex flex-col sm:flex-row justify-center gap-6 items-center px-4">
             <button onClick={() => scrollToAnchor('contact')} className="group px-14 py-7 rounded-2xl bg-[#0a192f] text-white font-black shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.03] transition-all text-2xl w-full sm:w-auto">锁定物理机位 <ArrowRight className="w-7 h-7 group-hover:translate-x-1 transition"/></button>
@@ -159,7 +170,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* 新增：物理基础设施实拍模块 */}
       <section className="py-32 px-4 sm:px-6 bg-white border-t border-black/5">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-20">
@@ -253,7 +263,7 @@ export default function App() {
     ];
 
     return (
-      <div className="animate-in bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
+      <div className="bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <button onClick={() => goToPage('home')} className="group flex items-center gap-3 text-black/40 hover:text-black font-black mb-16 transition-all">
             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1"/> 返回首页
@@ -326,7 +336,7 @@ export default function App() {
     ];
 
     return (
-      <div className="animate-in bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
+      <div className="bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <button onClick={() => goToPage('home')} className="group flex items-center gap-3 text-black/40 hover:text-black font-black mb-16 transition-all">
             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1"/> 返回首页
@@ -446,8 +456,57 @@ export default function App() {
             <button onClick={() => scrollToAnchor('pricing')} className="hover:text-red-600">资费说明</button>
           </div>
 
-          <button onClick={() => scrollToAnchor('contact')} className="px-6 py-2.5 rounded-full bg-[#0a192f] text-white text-sm font-black hover:shadow-xl hover:scale-105 transition-all">开始部署</button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden w-10 h-10 rounded-full border border-black/10 bg-white flex items-center justify-center"
+              aria-label="打开导航菜单"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={() => scrollToAnchor('contact')}
+              className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0a192f] text-white text-sm font-black hover:shadow-xl hover:scale-105 transition-all"
+            >
+              开始部署
+            </button>
+          </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-black/5 bg-white/95 backdrop-blur-2xl">
+            <div className="px-4 py-4 space-y-2 text-sm font-black">
+              <button
+                onClick={() => goToPage('home')}
+                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'home' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
+              >
+                首页
+              </button>
+
+              <button
+                onClick={() => goToPage('solution')}
+                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'solution' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
+              >
+                架构方案
+              </button>
+
+              <button
+                onClick={() => scrollToAnchor('pricing')}
+                className="w-full text-left px-4 py-4 rounded-2xl text-black/70"
+              >
+                资费说明
+              </button>
+
+              <button
+                onClick={() => goToPage('careers')}
+                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'careers' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
+              >
+                加入我们
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main>
@@ -455,7 +514,7 @@ export default function App() {
         {currentPage === 'solution' && <SolutionPage />}
         {currentPage === 'careers' && <CareersPage />}
 
-        {/* 联系表单区块 (仅在非招聘页显示) */}
+        {/* 联系表单区块 */}
         {currentPage !== 'careers' && (
           <section id="contact" className="py-32 px-4 sm:px-6 bg-[#0a192f]">
             <div className="max-w-5xl mx-auto">
@@ -514,8 +573,6 @@ export default function App() {
       <style>{`
         html { scroll-behavior: smooth; }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0,0,0,0.12); }
-        .animate-in { animation: ai 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes ai { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         ::selection { background: #dc2626; color: white; }
       `}</style>
     </div>
