@@ -105,7 +105,7 @@ export default function App() {
           <h1 className="text-[44px] sm:text-7xl md:text-[88px] font-black tracking-[-0.07em] leading-[1.1] sm:leading-[0.95] mb-10">加拿大本地 Mac 真机<br/><span className="text-red-600">用真实设备 做真实业务</span></h1>
           <div className="mt-8 max-w-4xl mx-auto space-y-8 px-4">
             <p className="text-xl sm:text-3xl leading-relaxed text-black/70 font-bold">专为 {['TikTok 美区直播', '跨境账号运营', '支付后台远程运维'].map((s, i) => <React.Fragment key={i}><span className="text-[#1d1d1f] underline decoration-red-400 decoration-4 underline-offset-8">{s}</span>{i < 2 ? '、' : ''}</React.Fragment>)} 设计</p>
-            <div className="py-8 border-y border-black/5 mt-12"><p className="text-lg sm:text-2xl text-red-700 font-black mb-4">非虚拟机 · 非代理 · 非数据中心 IP</p><p className="text-md sm:text-lg text-black/40 font-bold leading-relaxed">每个环境 = 一台在加拿大本地运行的真实 Mac 硬件 + 一条独立本地 ISP 网络 + 一个独立静态住宅 IP<br/>从设备、网络、IP 三个底层维度，降低因虚拟化环境、代理链路或数据中心 IP 标记带来的环境不确定性。</p></div>
+            <div className="py-8 border-y border-black/5 mt-12"><p className="text-lg sm:text-2xl text-red-700 font-black mb-4">非虚拟机 · 非代理 · 非数据中心 IP</p><p className="text-md sm:text-lg text-black/40 font-bold leading-relaxed">每个环境 = 一台在加拿大本地运行的真实 Mac 硬件 + 一条独立本地 ISP 网络 + 一个独立静态住宅 IP<br/>从设备、网络、IP 三个底层维度，降低因虚拟化环境、代理链路或数据中心 IP 标记带来的环境不确定性</p></div>
           </div>
           <div className="mt-16 flex flex-col sm:flex-row justify-center gap-6 items-center px-4">
             <button onClick={() => scrollToAnchor('contact')} className="group px-14 py-7 rounded-2xl bg-[#0a192f] text-white font-black shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.03] transition-all text-2xl w-full sm:w-auto">锁定物理机位 <ArrowRight className="w-7 h-7 group-hover:translate-x-1 transition"/></button>
