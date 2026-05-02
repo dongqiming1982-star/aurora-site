@@ -1,580 +1,1265 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  Activity, 
-  ArrowRight, 
-  CheckCircle2, 
-  ChevronLeft, 
-  Coffee, 
-  Cpu, 
-  Globe, 
-  Monitor, 
-  Network, 
-  Send, 
-  Server, 
-  Shield, 
-  Zap, 
-  MousePointer2, 
-  XCircle, 
-  Check,
-  Target,
-  Power,
-  X,
-  Menu,
-  MapPin,
-  Settings,
-  Clock,
-  Car,
-  Box,
-  Wrench,
-  Wifi,
-  Mail,
-  Camera
-} from 'lucide-react';
+import { useState, useEffect } from 'react'
+import {
+  ArrowRight, CheckCircle2, Shield, Monitor, Globe2, Server,
+  Lock, MapPin, Cpu, Mail, Menu, X, Network, Router,
+  HardDrive, Wrench, Users, BriefcaseBusiness,
+  ChevronRight, Activity, Wifi, Languages, ShoppingCart,
+  CreditCard, Radio, Megaphone, Store, Headphones, Layers3,
+  HomeIcon
+} from 'lucide-react'
 
-// 页面类型定义
-type Page = 'home' | 'solution' | 'careers';
+type Page = 'home' | 'architecture' | 'careers'
+type Language = 'zh' | 'en'
 
-// 枫叶图标组件
-const MapleLeaf = ({ className = '' }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M12,2L13,5L16,4L15,7L18,7L16,9L19,12L16,13L17,16L14,15L14,18L12,17L10,18L10,15L7,16L8,13L5,12L8,9L6,7L9,7L8,4L11,5L12,2Z" />
-  </svg>
-);
+const pagePath = (target: Page) => {
+  if (target === 'architecture') return '/architecture'
+  if (target === 'careers') return '/careers'
+  return '/'
+}
+
+const pageFromPath = (): Page => {
+  if (typeof window === 'undefined') return 'home'
+  const path = window.location.pathname.toLowerCase()
+  if (path.startsWith('/architecture')) return 'architecture'
+  if (path.startsWith('/careers')) return 'careers'
+  return 'home'
+}
+
+const translations = {
+  zh: {
+    nav: {
+      home: '首页',
+      arch: '技术架构',
+      careers: '本地合作',
+      pricing: '价格方案',
+      cta: '申请部署'
+    },
+    hero: {
+      tag: '独享 Mac mini · 住宅级本地网络 · 加拿大本地环境',
+      title1: '真实设备.',
+      title2: '真实身份.',
+      title3: '为长效稳定而生。',
+      desc: 'Aurora 将独享 Mac mini 物理设备部署在加拿大本地住宅、办公室或安全商业空间，配合独立静态 IP / 固定网络出口，为跨境电商、直播团队、广告后台、支付后台、代运营公司和远程员工提供长期稳定的一客一机操作环境。',
+      punch: '不是共享代理，不是廉价 VPS，也不是机房代理池。Aurora 提供真实加拿大本地空间中的物理 Mac mini 设备，保持设备、网络和远程操作环境长期一致。',
+      note: '设备部署城市将根据资源可用性和运营需求在加拿大境内分配。',
+      card1: ['独享 Mac mini', '真实物理主机，非虚拟机，非共享。', Cpu],
+      card2: ['住宅级本地网络', '部署于加拿大住宅、办公室或安全商业空间，非传统机房 VPS。', MapPin],
+      card3: ['一客一机', '设备、网络与远程操作环境长期一致。', Lock],
+      btn1: '申请部署',
+      btn2: '技术架构'
+    },
+    liveNode: {
+      title: '当前节点',
+      loc: '加拿大 · 本地住宅 / 办公室 / 安全商业空间部署',
+      device: '物理设备',
+      deviceVal: '独享 Mac mini',
+      net: '网络环境',
+      netVal: '独立静态 IP / 住宅级固定网络出口',
+      access: '接入方式',
+      accessVal: '私有远程工作站',
+      isolation: '隔离级别',
+      isolationVal: '物理级环境隔离'
+    },
+    solution: {
+      tag: '核心优势',
+      title: '真实加拿大本地物理设备环境，而非机房 VPS 或共享代理池。',
+      card1: ['独享 Mac mini', '每位客户分配一台独立加拿大 Mac mini 物理主机。无虚拟机层，无共享桌面环境。', Monitor],
+      card2: ['住宅级本地网络', '设备部署于加拿大住宅、办公室或安全商业空间，配合独立静态 IP / 固定网络出口。', Network],
+      card3: ['长期稳定运行', '基础状态监控、远程接入支持及必要时的加拿大本地物理维护。', Shield]
+    },
+    useCases: {
+      tag: '适用场景',
+      title: '覆盖多平台跨境后台、直播、电商和团队远程操作。',
+      desc: '适用于 TikTok、Shopify、Amazon、Meta Ads、Google Ads、Stripe、PayPal、跨境电商后台、直播团队、代运营公司、客服系统和远程员工协作。',
+      items: [
+        ['TikTok / 直播电商', '用于 TikTok Shop、直播后台、商品管理、内容发布、素材准备和团队远程协作。', Radio],
+        ['跨境电商店铺', '用于 Shopify、Amazon、WooCommerce 等店铺后台、订单处理、Listing 管理、库存系统和日常运营。', ShoppingCart],
+        ['支付与商业后台', '用于 Stripe、PayPal、Shopify Payments 等支付和商业后台的日常管理环境。', CreditCard],
+        ['广告后台管理', '用于 Meta Ads、Google Ads、TikTok Ads 等广告后台的日常管理和团队协作。', Megaphone],
+        ['多平台环境一致性', '减少共享代理、廉价 VPS、机房代理池、多地多人操作带来的环境不一致问题。', Layers3],
+        ['远程员工工作流', '员工可远程访问指定加拿大工作站，不必共享老板个人电脑或临时远程桌面。', Headphones],
+        ['代运营 / 工作室', '适合代运营团队、直播工作室、跨境服务商和多项目团队进行分环境管理。', Users],
+        ['新兴市场客户', '兼顾印度、东南亚、中东等市场客户，为其提供加拿大本地设备与网络操作基础。', Store]
+      ]
+    },
+    compare: {
+      title: '为什么不使用机房 VPS、共享代理或普通远程桌面？',
+      desc: '跨境业务需要真实设备、固定网络和长期一致的本地操作环境，而不是拥挤的数据中心资源。',
+      vps: '机房 VPS / 共享代理',
+      vpsItems: ['数据中心或代理池资源', '共享或频繁变化的 IP 段', '虚拟化环境，设备身份弱', '多人混用，环境不一致'],
+      aurora: 'Aurora 本地物理节点',
+      auroraItems: ['加拿大住宅 / 办公室 / 安全商业空间部署', '独享 Mac mini 真实物理硬件', '独立静态 IP / 固定网络出口', '一客一机，长期稳定运行'],
+      cta: '查看技术架构详情'
+    },
+    pricing: {
+      tag: '方案定价',
+      title: '为跨境团队配置一套稳定的加拿大本地独立设备环境。',
+      desc: '加拿大本地物理工作站，月费简单透明。每套方案包含独享 Mac mini、独立静态 IP / 固定网络出口、私有远程访问、基础监控与本地维护协调。设备部署于加拿大住宅、办公室或安全商业空间，适合需要长期稳定后台操作环境的跨境电商、直播团队、广告团队和代运营公司。',
+      planName: '专业物理节点 Dedicated Starter',
+      price: 'CA$699',
+      unit: '/ 月 + 适用税费（如有）',
+      features: [
+        '1 台独享 Mac mini 物理主机',
+        '加拿大住宅 / 办公室 / 安全商业空间部署',
+        '独立静态 IP / 固定网络出口（每台设备唯一分配）',
+        '私有远程工作站访问',
+        '基础状态监控与运维',
+        '免设置费'
+      ],
+      cta: '立即申请'
+    },
+    archPage: {
+      tag: '技术架构',
+      title: '物理设备托管，',
+      titleHighlight: '专为稳定远程操作打造。',
+      desc: 'Aurora 提供部署于加拿大本地住宅、办公室或安全商业空间的专用 Mac mini 物理工作站，而非传统数据中心 VPS 或共享代理池。每个客户都拥有一客一机的硬件环境、独立静态 IP / 固定网络出口和私有远程接入流程，用于多平台后台操作、远程员工协作和长期跨境业务运营。',
+      cards: [
+        ['客户接入', '从您的所在地安全连接至专用工作站。', Monitor],
+        ['专用硬件', '物理级 Apple 硬件，专机专用。', HardDrive],
+        ['本地网络出口', '每位客户分配独立静态 IP / 固定网络出口，非共享。', Wifi],
+        ['本地维护', '硬件故障时提供线下物理支持。', Wrench]
+      ],
+      flowTitle: '系统流程',
+      flowSub: '本地、物理、隔离。',
+      flowDesc: '我们避开共享虚拟机、数据中心 VPS 和拥挤代理池。目标是打造清晰、耐用、具有明确物理权属的加拿大本地运行环境。',
+      flowSteps: [
+        ['1', '客户远程连接', '通过私有工作站流程访问分配给您的 Mac mini。'],
+        ['2', '设备在加拿大本地空间运行', '您的设备物理部署在加拿大住宅、办公室或安全商业空间，保持电力和网络常开。'],
+        ['3', '使用独立网络出口', '每台设备配置独立静态 IP / 固定网络出口，不与其他客户共享。'],
+        ['4', '线下支持保障', '若涉及硬件、电源或线路问题，本地技术人员可介入维护。']
+      ],
+      infraTitle: '像本地基础设施一样稳固，而非临时的机房替代方案。',
+      infraCards: [
+        ['硬件层', '独立 Mac mini，物理电源，物理布线，无共享桌面环境。', Cpu],
+        ['网络层', '独立静态 IP / 住宅级固定网络出口，保持设备与业务环境的一致性。', Router],
+        ['访问层', '远程工作站接入，确保与其它客户隔离。', Lock],
+        ['监控层', '基础在线监测，物理故障时支持人工干预。', Activity],
+        ['维护层', '本地技术员支持：重启、查线、换机及网络检查。', Wrench],
+        ['扩展层', '随着业务增长，可增加独立的本地物理节点。', Server]
+      ],
+      boundaryTitle: '运营边界',
+      boundaryDesc: 'Aurora 提供物理工作站基础设施及硬件维护。客户需对其账户、软件、平台操作及业务流程负全部责任。',
+      boundaries: [
+        'Aurora 仅提供基础设施服务，不用于规避平台规则、绕过风控或从事任何欺诈、滥用行为。',
+        '所有使用行为必须遵守适用法律、平台政策及第三方服务条款。',
+        '我们仅提供硬件托管与远程接入支持。',
+        '不提供任何涉及僵尸流量、虚假互动或滥用平台的非法服务。',
+        '每台设备均分配给唯一的客户环境。',
+        '物理维护由加拿大本地技术人员执行。',
+        '客户在使用托管工作站时，必须自行遵守适用法律、平台条款及第三方服务规则。'
+      ]
+    },
+    careers: {
+      tag: '加拿大本地合作机会',
+      title: '加入我们的',
+      titleHighlight: '本地节点支持网络。',
+      desc: '我们正在建立覆盖加拿大多个城市的本地合作网络，包含现场维护助理与本地节点托管合作方两类角色，共同支持 Mac mini 物理设备的稳定运行。',
+      cards: [
+        ['现场维护助理', '按需上门，检查设备、重启、查线、拍照反馈。', Wrench],
+        ['节点托管合作方', '提供安全、稳定的设备放置空间与持续电力条件。', HomeIcon],
+        ['低参与合作', '无需参与客户业务，也无需接触任何客户账户。', Shield],
+        ['长期合作', '适合住宅、办公室或安全商业空间。', BriefcaseBusiness]
+      ],
+      techTitle: '合作类型一：现场维护助理',
+      techDesc: '适合有交通工具、责任心强、能够按步骤执行任务的人。工作内容以简单现场检查为主，不需要软件开发能力。',
+      techTasks: [
+        ['电源检查', '确认主机、路由器和适配器运行正常。'],
+        ['布线巡查', '检查以太网线、电源线及设备摆放情况。'],
+        ['简易重启', '根据指令手动重启主机或网络设备。'],
+        ['拍照报告', '每次访问后发送清晰的照片或短视频反馈。'],
+        ['设备更换', '在预先安排下，协助更换主机或路由器。']
+      ],
+      hostTitle: '合作类型二：本地节点托管合作方',
+      hostDesc: '适合在加拿大拥有稳定住宅、办公室或安全商业空间的合作方。合作方仅提供基础环境支持，设备、网络连接与维护流程由 Aurora 统一管理。',
+      hostTasks: [
+        ['安全空间', '提供干燥、安全、稳定的设备放置空间。'],
+        ['持续电力', '允许设备长期通电运行。'],
+        ['基础配合', '在需要时协助确认设备状态或预约维护访问。'],
+        ['无需提供网络', '网络连接由 Aurora 提供和统一管理，合作方无需提供或配置任何网络资源。'],
+        ['不接触客户业务', '合作方无需登录、管理或使用任何客户账户或平台。']
+      ],
+      whoTitle: '我们要找的人',
+      whoSub: '靠谱、稳定、低参与。',
+      fitTitle: '基本要求',
+      fitItems: [
+        '位于加拿大主要城市或周边地区。',
+        '有稳定住所、办公室或安全商业空间者优先。',
+        '能提供持续电力和安全设备放置条件。',
+        '能够按要求进行简单状态确认或预约配合。',
+        '沟通清楚，响应及时，责任心强。',
+        '尊重设备安全和客户隐私。'
+      ],
+      plusTitle: '加分项',
+      plusItems: [
+        '有基础电脑硬件或家庭网络经验。',
+        '有办公室、仓储、物业、外勤或 IT 支持经验。',
+        '有可靠交通工具。',
+        '空间通风、干燥、可长期稳定放置设备。',
+        '愿意长期合作。',
+        '可配合多个设备或多个节点扩展者优先。'
+      ],
+      applyTitle: '对本地合作感兴趣？',
+      applyDesc: '请发送您的姓名、所在城市、可合作类型、空间条件、可用时间及联系方式给我们。',
+      applyForm: {
+        name: '姓名',
+        contact: '邮箱或手机号',
+        area: '所在城市 / 区域',
+        type: '合作类型：现场维护 / 节点托管 / 两者都可以',
+        bio: '请说明空间条件、可用时间、交通工具及相关经验',
+        submit: '提交申请',
+        toast: '申请已收到。如果想更快获得回复，请同时发送邮件至 contact@aurorasitesolutions.com'
+      }
+    },
+    privacy: {
+      title: '隐私政策 Privacy Policy',
+      effectiveDate: '生效日期：2026年5月2日',
+      intro: '本隐私政策说明 AURORA SITE SOLUTIONS LTD. 如何根据加拿大适用的隐私法律，包括 Personal Information Protection and Electronic Documents Act (PIPEDA)、Alberta Personal Information Protection Act (PIPA) 以及其他适用法律，收集、使用、保存和保护您的个人信息。',
+      sections: [
+        {
+          h: '1. 我们收集的信息',
+          p: '当您通过联系表单或本地合作申请表提交信息时，我们可能会收集您的姓名、联系方式、所在城市或区域、业务需求说明、设备需求、合作类型、空间条件、可用时间及您主动提供的其他信息。'
+        },
+        {
+          h: '2. 收集和使用目的',
+          p: '我们仅将您的信息用于处理服务申请、回复咨询、确认设备资源、提供客户支持、评估本地合作申请、安排维护沟通以及履行与您相关的服务或合作事项。'
+        },
+        {
+          h: '3. 同意与用途限制',
+          p: '通过提交表单，您同意我们按照本政策处理您的个人信息。提交表单不代表您同意接收营销邮件；除非您另行明确同意，我们只会就本次咨询、申请、服务或合作事项与您联系。'
+        },
+        {
+          h: '4. 第三方服务与数据处理',
+          p: '我们可能使用第三方云服务、邮件服务、表单处理工具、支付服务或客户沟通工具来存储和处理提交信息。相关服务可能位于加拿大或其他司法管辖区，并可能受当地法律约束。'
+        },
+        {
+          h: '5. 数据保存与保护',
+          p: '我们仅在实现上述目的所需期间保存个人信息，并采取合理的技术和管理措施保护您的信息安全。我们不会向第三方出售或出租您的个人信息。'
+        },
+        {
+          h: '6. 跨境传输',
+          p: '在提供服务、处理付款、表单提交、邮件沟通或技术支持时，您的信息可能被传输、处理或存储在加拿大以外地区。我们会采取合理措施确保服务提供方按照适用隐私要求处理相关信息。'
+        },
+        {
+          h: '7. 访问、更正与撤回同意',
+          p: '您可以联系我们请求访问、更正或删除您的个人信息，也可以在适用法律允许范围内撤回同意。撤回同意可能影响我们继续处理您的申请或提供相关服务。'
+        },
+        {
+          h: '8. 隐私负责人联系方式',
+          p: '如有任何隐私相关问题，请联系 Aurora 隐私负责人：contact@aurorasitesolutions.com'
+        }
+      ],
+      checkbox: '我已阅读并同意隐私政策，我知道我的信息将根据适用的加拿大隐私法律受到保护并仅用于处理此申请。',
+      useCheckbox: '我确认我的预期用途符合适用法律、平台政策及第三方服务条款，不会用于欺诈、虚假互动、滥用平台或规避平台执行机制。'
+    },
+    contact: {
+      title: '准备好建立你的加拿大本地独立设备环境了吗',
+      desc: '请告知你的平台类型、设备数量、远程员工数量和偏好的联系方式。我们将确认资源情况并提供部署方案。',
+      form: {
+        name: '姓名',
+        contact: '邮箱 / Telegram / 微信',
+        message: '请描述你的平台类型、用途、设备数量和远程操作需求',
+        submit: '提交申请'
+      },
+      successTitle: '申请已收悉。',
+      successDesc: '我们将尽快审核您的需求并与您取得联系。',
+      resend: '发送另一条申请'
+    },
+    footer: '© 2026 AURORA SITE SOLUTIONS LTD. · Canada-based infrastructure · Distributed physical workstation deployment'
+  },
+  en: {
+    nav: {
+      home: 'Home',
+      arch: 'Architecture',
+      careers: 'Local Partners',
+      pricing: 'Pricing',
+      cta: 'Request Setup'
+    },
+    hero: {
+      tag: 'Dedicated Mac mini · Local Residential / Office Network · Private Workstation',
+      title1: 'Real Devices.',
+      title2: 'Real Identity.',
+      title3: 'Built for Stability.',
+      desc: 'Aurora hosts dedicated Mac mini workstations in local Canadian residential, office, or secure commercial sites, with dedicated static IP / fixed network access for cross-border e-commerce, live commerce, ad operations, payment dashboards, agencies, and remote teams.',
+      punch: 'Not a datacenter VPS. Not a shared proxy pool. Not a random remote desktop. Aurora provides real Canadian physical workstations built for stable, long-term business operations.',
+      note: 'Device location may vary across Canadian cities depending on availability and operational requirements.',
+      card1: ['Dedicated Mac mini', 'Real physical hardware. Not virtual. Not shared.', Cpu],
+      card2: ['Local residential-grade network', 'Hosted in Canadian residential, office, or secure commercial sites, not traditional datacenter VPS.', MapPin],
+      card3: ['One client, one device', 'A consistent device, network, and remote operation environment.', Lock],
+      btn1: 'Request Setup',
+      btn2: 'Technical Architecture'
+    },
+    liveNode: {
+      title: 'Live node',
+      loc: 'Canada · Local residential / office / secure commercial sites',
+      device: 'Device',
+      deviceVal: 'Dedicated Mac mini',
+      net: 'Network',
+      netVal: 'Dedicated static IP / local fixed network access',
+      access: 'Access',
+      accessVal: 'Private remote workstation',
+      isolation: 'Isolation',
+      isolationVal: 'No shared environment'
+    },
+    solution: {
+      tag: 'What you get',
+      title: 'A real Canadian local device environment, not a datacenter VPS or shared proxy pool.',
+      card1: ['Dedicated Mac mini', 'A physical Canadian Mac mini assigned to your operation. No shared VM layer, no shared desktop environment.', Monitor],
+      card2: ['Local residential-grade network', 'Devices are hosted in Canadian residential, office, or secure commercial sites with dedicated static IP / fixed network access.', Network],
+      card3: ['Long-term stability', 'Basic monitoring, remote access support, and Canadian physical maintenance when needed.', Shield]
+    },
+    useCases: {
+      tag: 'Use Cases',
+      title: 'Built for multi-platform backend operations, commerce, and remote teams.',
+      desc: 'For TikTok, Shopify, Amazon, Meta Ads, Google Ads, Stripe, PayPal, e-commerce teams, agencies, customer support systems, and remote operators.',
+      items: [
+        ['TikTok / Live Commerce', 'Use a dedicated Canadian Mac mini environment for TikTok Shop, livestream preparation, dashboard access, product management, and remote team workflows.', Radio],
+        ['Cross-border E-commerce', 'Manage Shopify, Amazon, WooCommerce, storefronts, orders, listings, inventory tools, customer service systems, and daily operations.', ShoppingCart],
+        ['Payment & Business Dashboards', 'Use a stable business workstation for Stripe, PayPal, Shopify Payments, and other payment or business dashboard administration.', CreditCard],
+        ['Ad Operations', 'Support daily management of Meta Ads, Google Ads, TikTok Ads, and other advertising dashboards for business teams.', Megaphone],
+        ['Environment Consistency', 'Reduce inconsistency caused by shared proxies, cheap VPS setups, datacenter proxy pools, multiple operators, and mixed device access.', Layers3],
+        ['Remote Staff Workflow', 'Let staff access a controlled Canadian workstation without sharing the owner’s personal computer or using random remote desktops.', Headphones],
+        ['Agency / Studio Operations', 'Suitable for agencies, live commerce studios, cross-border service providers, and multi-project teams.', Users],
+        ['Emerging-market Operators', 'Serve operators from Mainland China, India, Southeast Asia, the Middle East, and other markets that need a Canadian device environment.', Store]
+      ]
+    },
+    compare: {
+      title: 'Why not datacenter VPS, shared proxies, or random remote desktops?',
+      desc: 'Cross-border operations need real devices, fixed networks, and a consistent local operating environment — not crowded datacenter resources.',
+      vps: 'Datacenter VPS / shared proxy',
+      vpsItems: ['Datacenter or proxy pool resources', 'Shared or changing IP ranges', 'Virtual environments with weak device identity', 'Mixed users and inconsistent access'],
+      aurora: 'Aurora local physical node',
+      auroraItems: ['Hosted in Canadian residential, office, or secure commercial sites', 'Real dedicated Mac mini hardware', 'Dedicated static IP / fixed network access', 'One client, one environment for long-term use'],
+      cta: 'View technical architecture'
+    },
+    pricing: {
+      tag: 'Pricing',
+      title: 'One dedicated Canadian local device environment for your cross-border team.',
+      desc: 'Simple monthly pricing for a dedicated physical workstation in Canada. Each plan includes a dedicated Mac mini, dedicated static IP / fixed network access, private remote access, basic monitoring, and local maintenance coordination. Devices are hosted in Canadian residential, office, or secure commercial sites for teams that need a stable long-term backend environment.',
+      planName: 'Dedicated Starter',
+      price: '$699 CAD',
+      unit: '/ month + applicable taxes, if any',
+      features: [
+        '1 Dedicated Mac mini',
+        'Hosted in a Canadian residential, office, or secure commercial site',
+        'Dedicated static IP / fixed network access, one per device',
+        'Private remote access environment',
+        'Basic monitoring and support',
+        'No setup fee'
+      ],
+      cta: 'Get Your Device'
+    },
+    archPage: {
+      tag: 'Technical Architecture',
+      title: 'Physical device hosting,',
+      titleHighlight: 'built for stable remote operations.',
+      desc: 'Aurora provides dedicated Mac mini workstations hosted in local Canadian residential, office, or secure commercial sites — not traditional datacenter VPS environments or shared proxy pools. Each client receives one physical device, dedicated static IP / fixed network access, and a private remote access workflow for multi-platform backend operations, remote staff workflows, and long-term cross-border business use.',
+      cards: [
+        ['Client Access', 'Secure remote connection from your own location.', Monitor],
+        ['Dedicated Mac mini', 'Physical Apple hardware assigned to one client.', HardDrive],
+        ['Local Network Access', 'Dedicated static IP / fixed network access for each client, not shared.', Wifi],
+        ['Local Support', 'On-site maintenance when hardware requires attention.', Wrench]
+      ],
+      flowTitle: 'System Flow',
+      flowSub: 'Local, physical, isolated.',
+      flowDesc: 'The setup avoids shared virtual machines, datacenter VPS servers, and crowded proxy pools. The goal is a clean, durable Canadian local operating environment with clear ownership and predictable maintenance.',
+      flowSteps: [
+        ['1', 'Client connects remotely', 'You access the assigned Mac mini through a private remote workstation workflow.'],
+        ['2', 'Mac mini runs inside a Canadian local site', 'Your assigned device remains physically deployed and powered in a Canadian residential, office, or secure commercial site.'],
+        ['3', 'Use dedicated network access', 'Each device receives dedicated static IP / fixed network access, not shared with other clients.'],
+        ['4', 'Support handles issues', 'If hardware, power, or cabling needs attention, local maintenance can be performed.']
+      ],
+      infraTitle: 'Designed like local infrastructure, not a temporary datacenter workaround.',
+      infraCards: [
+        ['Hardware Layer', 'Dedicated Apple Mac mini, physical power, physical cabling, no shared desktop environment.', Cpu],
+        ['Network Layer', 'Dedicated static IP / local fixed network access for a consistent device and business environment.', Router],
+        ['Access Layer', 'Remote workstation access for client operation, separated from other customers.', Lock],
+        ['Monitoring Layer', 'Basic uptime awareness and manual intervention when physical troubleshooting is needed.', Activity],
+        ['Maintenance Layer', 'Local technician support for reboot, cable check, device replacement, and network inspection.', Wrench],
+        ['Expansion Layer', 'Additional devices can be added as separate local physical nodes when the operation grows.', Server]
+      ],
+      boundaryTitle: 'Operational boundaries',
+      boundaryDesc: 'Aurora provides physical workstation infrastructure and maintenance. Customers are responsible for how they use their own accounts, software, platforms, and business workflows.',
+      boundaries: [
+        'Aurora provides infrastructure only. This service is not intended for bypassing platform restrictions, evading enforcement mechanisms, or engaging in fraudulent or abusive activities.',
+        'All usage must comply with applicable laws, platform policies, and third-party service terms.',
+        'We provide hardware hosting and remote workstation access.',
+        'We do not sell bot traffic, fake engagement, or platform abuse services.',
+        'Each device is assigned to one client environment.',
+        'Physical maintenance is handled by local Canadian technicians.',
+        'Customers must comply with all applicable laws, platform terms, and third-party service rules when using the hosted workstation.'
+      ]
+    },
+    careers: {
+      tag: 'Local Partnership Opportunities · Canada',
+      title: 'Join our local',
+      titleHighlight: 'node support network.',
+      desc: 'We are building a distributed local partnership network across Canada, including field maintenance assistants and local node hosting partners to support stable Mac mini device operations.',
+      cards: [
+        ['Field Maintenance Assistant', 'On-demand visits, device checks, reboot, cable check, and photo reports.', Wrench],
+        ['Node Hosting Partner', 'Provide safe device space and stable power conditions.', HomeIcon],
+        ['Low-involvement role', 'No customer account access and no customer business operation required.', Shield],
+        ['Long-term partnership', 'Suitable for residences, offices, or secure commercial spaces.', BriefcaseBusiness]
+      ],
+      techTitle: 'Partnership Type 1: Field Maintenance Assistant',
+      techDesc: 'Suitable for responsible people with transportation who can follow step-by-step instructions. The work is practical on-site support, not software engineering.',
+      techTasks: [
+        ['Power check', 'Confirm Mac mini, router, and power adapter are running.'],
+        ['Cable check', 'Inspect Ethernet, power cable, and device placement.'],
+        ['Simple reboot', 'Restart Mac mini or router when instructed.'],
+        ['Photo report', 'Send clear photos or short videos after each visit.'],
+        ['Device swap', 'Replace a Mac mini or router if pre-arranged.']
+      ],
+      hostTitle: 'Partnership Type 2: Local Node Hosting Partner',
+      hostDesc: 'Suitable for partners in Canada who have a stable residence, office, or secure commercial space. Partners only provide basic site conditions. Devices, network connectivity, and maintenance workflows are managed by Aurora.',
+      hostTasks: [
+        ['Safe space', 'Provide a dry, safe, and stable space for equipment placement.'],
+        ['Stable power', 'Allow devices to remain powered for long-term operation.'],
+        ['Basic assistance', 'Assist with simple status checks or scheduled maintenance access when needed.'],
+        ['No internet required', 'Network connectivity is provided and managed by Aurora. Hosting partners are not required to supply or configure any internet connection.'],
+        ['No customer operations', 'Partners do not log in, manage, or use any customer accounts or platforms.']
+      ],
+      whoTitle: 'Who we want',
+      whoSub: 'Reliable, stable, low-involvement.',
+      fitTitle: 'Good fit',
+      fitItems: [
+        'Located in or near a major Canadian city.',
+        'Residence, office, or secure commercial space preferred.',
+        'Able to provide stable power and safe device placement conditions.',
+        'Able to assist with simple status checks or scheduled access when needed.',
+        'Clear communication and reliable response.',
+        'Respectful of device security and customer privacy.'
+      ],
+      plusTitle: 'Helpful but not required',
+      plusItems: [
+        'Basic computer hardware or home network experience.',
+        'Office, storage, property, field service, or IT support experience.',
+        'Reliable transportation.',
+        'Dry, ventilated space suitable for long-term device placement.',
+        'Willingness to work together long-term.',
+        'Ability to support multiple devices or future node expansion.'
+      ],
+      applyTitle: 'Interested in local partnership?',
+      applyDesc: 'Send us your name, city, preferred partnership type, site conditions, availability, and contact method.',
+      applyForm: {
+        name: 'Full name',
+        contact: 'Email or phone',
+        area: 'City / area',
+        type: 'Partnership type: Field maintenance / Node hosting / Both',
+        bio: 'Site conditions, availability, transportation, and relevant experience',
+        submit: 'Submit Application',
+        toast: 'Application received. Please also email contact@aurorasitesolutions.com'
+      }
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      effectiveDate: 'Effective Date: May 2, 2026',
+      intro: "This Privacy Policy explains how AURORA SITE SOLUTIONS LTD. collects, uses, stores, and protects personal information under applicable Canadian privacy laws, including the Personal Information Protection and Electronic Documents Act (PIPEDA), Alberta's Personal Information Protection Act (PIPA), and other applicable laws.",
+      sections: [
+        {
+          h: '1. Information We Collect',
+          p: 'When you submit information through our contact form or local partnership application form, we may collect your name, contact details, city or area, business requirements, device requirements, partnership type, site conditions, availability, and any other information you choose to provide.'
+        },
+        {
+          h: '2. Purpose of Collection and Use',
+          p: 'We use your information only to process service requests, respond to inquiries, confirm device availability, provide customer support, evaluate local partnership applications, coordinate maintenance communications, and fulfill service or partnership matters related to you.'
+        },
+        {
+          h: '3. Consent and Limited Use',
+          p: 'By submitting a form, you consent to the processing of your personal information as described in this policy. Submitting a form does not mean you agree to receive marketing emails. Unless you separately provide express consent, we will only contact you regarding your inquiry, application, service, or partnership matter.'
+        },
+        {
+          h: '4. Third-party Services and Data Processing',
+          p: 'We may use third-party cloud services, email services, form processing tools, payment providers, or customer communication tools to store and process submitted information. These services may be located in Canada or other jurisdictions and may be subject to local laws.'
+        },
+        {
+          h: '5. Data Retention and Protection',
+          p: 'We retain personal information only for as long as necessary for the purposes described above and use reasonable technical and administrative safeguards to protect it. We do not sell or rent your personal information to third parties.'
+        },
+        {
+          h: '6. Cross-border Transfers',
+          p: 'When providing services, processing payments, handling form submissions, managing email communication, or providing technical support, your information may be transferred, processed, or stored outside Canada. We take reasonable steps to ensure service providers process information in accordance with applicable privacy requirements.'
+        },
+        {
+          h: '7. Access, Correction, and Withdrawal of Consent',
+          p: 'You may contact us to request access to, correction of, or deletion of your personal information. You may also withdraw consent where permitted by applicable law. Withdrawal of consent may affect our ability to process your application or provide related services.'
+        },
+        {
+          h: '8. Privacy Officer Contact',
+          p: 'For any privacy-related questions, please contact Aurora Privacy Officer at: contact@aurorasitesolutions.com'
+        }
+      ],
+      checkbox: 'I have read and agree to the Privacy Policy. I understand my information is protected under applicable Canadian privacy laws and used only for this request.',
+      useCheckbox: 'I confirm that my intended use complies with applicable laws, platform policies, and third-party service terms, and will not be used for fraud, fake engagement, platform abuse, or evading enforcement mechanisms.'
+    },
+    contact: {
+      title: 'Ready to build your dedicated Canadian local device environment?',
+      desc: 'Send your platform type, device count, remote staff needs, and preferred contact method. We will confirm availability.',
+      form: {
+        name: 'Name',
+        contact: 'Email / Telegram / WeChat',
+        message: 'Tell us your platforms, use case, device count, and remote access needs',
+        submit: 'Submit Request'
+      },
+      successTitle: 'Request received.',
+      successDesc: 'We will review your setup details and contact you shortly.',
+      resend: 'Send another request'
+    },
+    footer: '© 2026 AURORA SITE SOLUTIONS LTD. · Canada-based infrastructure · Distributed physical workstation deployment'
+  }
+}
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [page, setPage] = useState<Page>(() => pageFromPath())
 
-  // 滚动监听
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'en'
+    const saved = localStorage.getItem('lang')
+    if (saved === 'zh' || saved === 'en') return saved
+    return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
+  })
+
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const t = translations[lang]
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // 路由跳转
-  const goToPage = (p: Page) => { 
-    setCurrentPage(p);
-    setMobileMenuOpen(false);
-    window.scrollTo(0, 0); 
-  };
-  
-  // 锚点跳转
-  const scrollToAnchor = (id: string) => {
-    setMobileMenuOpen(false);
-    if (currentPage !== 'home') { 
-      goToPage('home'); 
-      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 120); 
+    const handlePopState = () => {
+      setPage(pageFromPath())
+      setMenuOpen(false)
     }
-    else document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormSubmitted(true);
-  };
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
-  // 通用特性卡片组件
-  const FeatureCard = ({ title, desc, note, icon: Icon, dark = false }: any) => (
-    <div className={`p-10 rounded-[40px] ${dark ? 'bg-white/5 border border-white/10 text-center' : 'bg-red-50/30 border border-red-100 flex flex-col hover:shadow-2xl'} transition-all duration-500`}>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 shadow-lg shrink-0 ${dark ? 'text-red-400' : 'bg-red-600 text-white'}`}>
-        <Icon className={dark ? "w-10 h-10" : "w-7 h-7"} />
-      </div>
-      <h3 className={`font-black mb-4 tracking-tight ${dark ? 'text-xl' : 'text-2xl'}`}>{title}</h3>
-      <p className={`${dark ? 'text-white/30 text-sm' : 'text-black/50 text-sm'} font-bold leading-relaxed mb-6`}>{desc}</p>
-      {!dark && note && <div className="mt-auto pt-6 border-t border-red-100 text-red-800 font-black italic text-sm">👉 {note}</div>}
-    </div>
-  );
+  useEffect(() => {
+    const origin = window.location.origin
+    const path = page === 'home' ? '/' : page === 'architecture' ? '/architecture' : '/careers'
 
-  const pricingPlans = [
-    { name: 'TikTok 直播专机', tagline: '稳定推流 · 独享本地环境', price: '699', unit: '/月', currency: 'CA$', features: ['1 台独立 Mac 真机', '独立静态住宅 IP', '独享 ISP 网络线路', '适合直播与长期运营', '基础远程运维支持'] },
-    { name: '跨境账号专机', tagline: '高价值账号长期运营', price: '1,997', unit: '/月起', currency: 'CA$', features: ['3 台物理 Mac 真机', '3 个独立静态住宅 IP', '设备 / 网络 / 账号分离', '迁移与环境配置支持', '优先级技术响应'], highlight: true },
-    { name: '矩阵定制方案', tagline: '多节点私有物理集群', price: '定制', unit: '', currency: '', features: ['按需求定制节点规模', '定制化住宅 IP 资源', '指定区域与 ISP 可评估', '独立运维交付方案', '企业级响应支持'] }
-  ];
+    const seo = {
+      zh: {
+        home: {
+          title: '加拿大独享Mac mini设备｜住宅级网络与跨境运营环境 | Aurora',
+          description:
+            'Aurora 提供加拿大本地住宅、办公室或安全商业空间部署的独享 Mac mini 物理工作站、独立静态 IP / 固定网络出口和私有远程访问环境，适用于 TikTok、Shopify、Amazon、广告后台、支付后台、代运营团队和跨境远程员工。'
+        },
+        architecture: {
+          title: '加拿大本地物理工作站架构｜独享Mac mini与住宅级网络环境 | Aurora',
+          description:
+            '了解 Aurora 加拿大本地物理工作站架构：独享 Mac mini、住宅/办公室/安全商业空间部署、独立静态 IP / 固定网络出口、私有远程访问和本地维护协调。'
+        },
+        careers: {
+          title: '加拿大本地节点合作｜现场维护与设备托管合作 | Aurora',
+          description:
+            'Aurora 招募加拿大本地合作方，包括现场维护助理和本地节点托管合作方，支持 Mac mini 物理设备稳定运行。'
+        }
+      },
+      en: {
+        home: {
+          title: 'Dedicated Canadian Mac mini with Local Residential / Office Network | Aurora',
+          description:
+            'Aurora provides dedicated Canadian Mac mini workstations hosted in local residential, office, or secure commercial sites with dedicated static IP / fixed network access for TikTok, Shopify, Amazon, ads, payment dashboards, agencies, and remote teams.'
+        },
+        architecture: {
+          title: 'Canada Local Physical Workstation Architecture | Dedicated Mac mini | Aurora',
+          description:
+            'Explore Aurora’s Canada-based physical workstation architecture: dedicated Mac mini devices hosted in residential, office, or secure commercial sites with dedicated static IP / fixed network access, remote workstation access, and local maintenance coordination.'
+        },
+        careers: {
+          title: 'Canada Local Node Partners | Field Maintenance & Hosting | Aurora',
+          description:
+            'Aurora is building a local partner network in Canada for field maintenance assistants and local node hosting partners supporting dedicated Mac mini device operations.'
+        }
+      }
+    }
 
-  // --- 首页内容 ---
-  const HomePage = () => (
-    <>
-      <section className="pt-40 sm:pt-56 pb-24 px-4 sm:px-6 text-center relative">
-        <div className="max-w-7xl mx-auto z-10">
-          <div className="inline-flex items-center gap-4 px-5 py-2.5 rounded-full bg-red-50 border border-red-100 shadow-sm text-[11px] font-black uppercase tracking-[0.2em] text-[#4a1010] mb-10">
-            <span className="italic">Physically Dedicated</span><span className="w-px h-3 bg-red-200" /><span>真实设备 · 真实网络</span>
-          </div>
-          <h1 className="text-[44px] sm:text-7xl md:text-[88px] font-black tracking-[-0.07em] leading-[1.1] sm:leading-[0.95] mb-10">加拿大本地 Mac 真机<br/><span className="text-red-600">用真实设备 做真实业务</span></h1>
-          <div className="mt-8 max-w-4xl mx-auto space-y-8 px-4">
-            <p className="text-xl sm:text-3xl leading-relaxed text-black/70 font-bold">专为 {['TikTok 美区直播', '跨境账号运营', '支付后台远程运维'].map((s, i) => <React.Fragment key={i}><span className="text-[#1d1d1f] underline decoration-red-400 decoration-4 underline-offset-8">{s}</span>{i < 2 ? '、' : ''}</React.Fragment>)} 设计</p>
-            <div className="py-8 border-y border-black/5 mt-12"><p className="text-lg sm:text-2xl text-red-700 font-black mb-4">非虚拟机 · 非代理 · 非数据中心 IP</p><p className="text-md sm:text-lg text-black/40 font-bold leading-relaxed">每个环境 = 一台在加拿大本地运行的真实 Mac 硬件 + 一条独立本地 ISP 网络 + 一个独立静态住宅 IP<br/>从设备、网络、IP 三个底层维度，降低因虚拟化环境、代理链路或数据中心 IP 标记带来的环境不确定性</p></div>
-          </div>
-          <div className="mt-16 flex flex-col sm:flex-row justify-center gap-6 items-center px-4">
-            <button onClick={() => scrollToAnchor('contact')} className="group px-14 py-7 rounded-2xl bg-[#0a192f] text-white font-black shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.03] transition-all text-2xl w-full sm:w-auto">锁定物理机位 <ArrowRight className="w-7 h-7 group-hover:translate-x-1 transition"/></button>
-            <button onClick={() => goToPage('solution')} className="px-14 py-7 rounded-2xl bg-white border border-black/10 font-black text-2xl w-full sm:w-auto hover:bg-black/5 transition-all">查看架构方案</button>
-          </div>
-        </div>
-      </section>
+    const current = (seo as any)[lang][page]
+    document.title = current.title
 
-      <section className="py-24 px-4 sm:px-6 bg-[#0a192f] text-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
-          <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-400/20 text-red-400 font-black text-xs uppercase mb-8"><Coffee className="w-4 h-4"/> 形象化理解我们的服务</div>
-            <h2 className="text-4xl sm:text-6xl font-black mb-8 leading-[1.1]">这不只是个 IP<br/><span className="text-red-400">而是“加拿大物理工位”</span></h2>
-            <p className="text-xl sm:text-2xl text-red-100/60 font-bold">你可以理解为：你在加拿大有一个固定工位，那里有一台真实的 Mac，插着当地网线。<br/><span className="text-red-300">你只是在远程操作这台设备。</span></p>
-          </div>
-          <div className="flex-1 w-full bg-black/20 backdrop-blur-xl rounded-[40px] p-8 sm:p-12 border border-white/10">
-            <ul className="space-y-8">
-              {[
-                { t: '真实的显示终端', d: '由 Mac 物理显卡渲染的图形信号', I: Monitor },
-                { t: '真实的硬件指纹', d: '唯一的 Apple 芯片序列号', I: Cpu },
-                { t: '真实的网络画像', d: '本地 ISP 住宅宽带环境', I: Globe }
-              ].map((item, i) => (
-                <li key={i} className="flex gap-5">
-                  <div className="w-12 h-12 rounded-2xl bg-red-600 flex items-center justify-center shrink-0 shadow-lg"><item.I className="w-6 h-6 text-white"/></div>
-                  <div><h4 className="font-black text-xl mb-1">{item.t}</h4><p className="text-white/40 font-bold text-sm">{item.d}</p></div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
+    const setMeta = (name: string, content: string) => {
+      let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null
+      if (!tag) {
+        tag = document.createElement('meta')
+        tag.setAttribute('name', name)
+        document.head.appendChild(tag)
+      }
+      tag.setAttribute('content', content)
+    }
 
-      <section className="py-24 px-4 sm:px-6 bg-white border-y border-black/5"><div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
-        {[
-          ['降低底层环境关联风险', '每个环境都是独立 Mac 物理实体，拥有真实的硬件堆栈。', '环境真实性与一致性', Shield],
-          ['本地 ISP 住宅网络', '加拿大本地宽带接入，非数据中心批量 IP。信任度极高。', '住宅级纯净 IP 链路', Network],
-          ['长期稳定运营', '不做高频换 IP，不共享环境。适合高价值账号与直播。', '建立稳定的设备权属', Activity]
-        ].map(([t, d, n, I]: any, i) => <FeatureCard key={i} title={t} desc={d} note={n} icon={I} />)}
-      </div></section>
+    const setProperty = (property: string, content: string) => {
+      let tag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null
+      if (!tag) {
+        tag = document.createElement('meta')
+        tag.setAttribute('property', property)
+        document.head.appendChild(tag)
+      }
+      tag.setAttribute('content', content)
+    }
 
-      <section className="py-24 px-4 sm:px-6 bg-[#fbfbfd]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20"><h2 className="text-4xl sm:text-6xl font-black italic uppercase">底层差异对比</h2><p className="text-black/40 font-bold text-lg mt-4">为什么“真机环境”是目前最稳妥的跨境业务解决方案？</p></div>
-          <div className="overflow-x-auto bg-white rounded-[40px] border border-black/5 shadow-xl">
-            <table className="w-full min-w-[800px] border-collapse">
-              <thead><tr className="bg-black/5"><th className="py-8 px-8 text-left text-xs font-black uppercase text-black/40">对比维度</th><th className="py-8 px-8 text-center bg-[#0a192f] text-white font-black italic text-xl">Aurora 物理真机</th><th className="py-8 px-8 text-center text-black/60 font-black italic text-xl">传统虚拟化/代理</th></tr></thead>
-              <tbody className="divide-y divide-black/5">{[
-                ['硬件指纹', '原生 Apple 芯片序列号、显卡、真实传感器参数。', '由代码模拟生成的虚拟指纹，易被风控穿透。'],
-                ['IP 属性', '加拿大本地 ISP 住宅静态/拨号 IP，信任度高。', '数据中心机房 IP 段，已被标记为高风险。'],
-                ['环境隔离', '物理级硬件隔离，独立的硬件物理地址。', '同一物理服务器下的虚拟机，底层可能关联。'],
-                ['图形渲染', '独立显卡真实渲染输出，符合原生特征。', '软件模拟渲染，在驱动扫描中显示为虚拟。'],
-                ['交付周期', '涉及物理上架，需 12-24 小时交付。', '自动化秒级创建，权属极其廉价且不稳定。']
-              ].map(([l, p, v], i) => (
-                <tr key={i} className="hover:bg-red-50/20 transition-colors">
-                  <td className="py-10 px-8 font-black text-xl">{l}</td>
-                  <td className="py-10 px-8 bg-red-50/30 text-red-900 font-bold"><div className="flex gap-4"><Check className="w-5 h-5 text-red-600 shrink-0 mt-1"/><span>{p}</span></div></td>
-                  <td className="py-10 px-8 text-black/40 font-bold"><div className="flex gap-4"><XCircle className="w-5 h-5 text-black/20 shrink-0 mt-1"/><span>{v}</span></div></td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+    const setLink = (rel: string, href: string, hreflang?: string) => {
+      const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]`
+      let tag = document.querySelector(selector) as HTMLLinkElement | null
+      if (!tag) {
+        tag = document.createElement('link')
+        tag.setAttribute('rel', rel)
+        if (hreflang) tag.setAttribute('hreflang', hreflang)
+        document.head.appendChild(tag)
+      }
+      tag.setAttribute('href', href)
+    }
 
-      <section className="py-32 px-4 sm:px-6 bg-white border-t border-black/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-20">
-            <div>
-              <div className="inline-flex items-center gap-2 text-red-600 font-black text-xs uppercase tracking-widest mb-4">
-                <Camera className="w-4 h-4" /> Proof of Physicality
-              </div>
-              <h2 className="text-4xl sm:text-6xl font-black italic uppercase leading-[1.1]">物理基础设施实拍</h2>
-            </div>
-            <p className="text-lg text-black/40 font-bold max-w-md leading-snug">
-              眼见为实。我们拒绝使用任何网图或渲染图。以下展示均为我们在加拿大机房的真实物理资产与运行状态。
-            </p>
-          </div>
+    setMeta('description', current.description)
+    setMeta(
+      'keywords',
+      lang === 'zh'
+        ? '加拿大Mac mini,住宅级网络,独立静态IP,非机房VPS,非共享代理,加拿大本地设备,跨境电商设备,TikTok Shop,Shopify,Amazon,广告后台,支付后台,代运营团队,远程工作站'
+        : 'dedicated Mac mini Canada,local residential office network,dedicated static IP Canada,not datacenter VPS,not shared proxy,cross-border operators,TikTok Shop,Shopify,Amazon,ads dashboard,payment dashboard,remote workstation,agency operations'
+    )
+    setMeta('robots', 'index, follow')
+    setMeta('viewport', 'width=device-width, initial-scale=1')
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {[
-              {
-                title: "现场机架设备",
-                tag: "Hardware Infrastructure",
-                desc: "位于卡尔加里 NW区住户家中的物理机架，Mac 硬件整齐上架，确保散热与供电冗余。",
-                img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc51?q=80&w=2000&auto=format&fit=crop"
-              },
-              {
-                title: "真机操作环境",
-                tag: "Native OS Environment",
-                desc: "每一路远程流均来自物理显卡渲染，通过专用采集与低延迟传输协议，还原 1:1 真实触感。",
-                img: "https://images.unsplash.com/photo-1547082299-de196ea013d6?q=80&w=2030&auto=format&fit=crop"
-              },
-              {
-                title: "专业运维实拍",
-                tag: "Field Operations",
-                desc: "本地运维团队 24/7 待命。从网线插拔到硬件升级，我们提供物理层面的最后一道安全防线。",
-                img: "https://images.unsplash.com/photo-1581092921461-7d1568637344?q=80&w=2070&auto=format&fit=crop"
-              }
-            ].map((item, i) => (
-              <div key={i} className="group relative flex flex-col bg-[#fbfbfd] rounded-[48px] overflow-hidden border border-black/5 hover:shadow-3xl transition-all duration-700">
-                <div className="aspect-[4/3] overflow-hidden relative">
-                  <img 
-                    src={item.img} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                  <div className="absolute top-6 left-6 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">
-                    {item.tag}
-                  </div>
-                </div>
-                <div className="p-10 flex-grow flex flex-col">
-                  <h3 className="text-2xl font-black mb-4">{item.title}</h3>
-                  <p className="text-black/40 font-bold text-sm leading-relaxed mb-6">
-                    {item.desc}
-                  </p>
-                  <div className="mt-auto flex items-center gap-2 text-red-600 font-black text-xs uppercase tracking-tighter">
-                    <CheckCircle2 className="w-4 h-4" /> 资产经实名核验
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+    setProperty('og:title', current.title)
+    setProperty('og:description', current.description)
+    setProperty('og:type', 'website')
+    setProperty('og:url', `${origin}${path}`)
+    setProperty('og:site_name', 'Aurora Site Solutions')
 
-      <section id="pricing" className="py-32 px-4 bg-[#fbfbfd]"><div className="max-w-7xl mx-auto text-center">
-        <div className="mb-20"><h2 className="text-4xl sm:text-6xl font-black uppercase italic mb-6">物理资源分配</h2><div className="inline-block py-3 px-10 bg-[#0a192f] text-white rounded-full font-black text-xl mb-6">每个机位 = 独立硬件 + 独立宽带 + 专属远程通道</div><p className="text-black/40 font-bold text-lg max-w-2xl mx-auto">这不是廉价的代理 IP 分发，而是为了业务长期稳定性投入的物理基础设施。</p></div>
-        <div className="grid md:grid-cols-3 gap-10">{pricingPlans.map((p) => (
-          <div key={p.name} className={`relative flex flex-col p-10 sm:p-14 transition-all duration-700 ${p.highlight ? 'bg-[#0a192f] text-white rounded-[60px] shadow-3xl z-20 md:scale-105' : 'bg-white rounded-[60px] border border-black/5'}`}>
-            {p.highlight && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full bg-red-600 text-white text-xs font-black uppercase">Recommended</div>}
-            <div className="text-center mb-10"><h3 className="text-3xl font-black mb-4">{p.name}</h3><p className={`text-sm font-black uppercase tracking-widest ${p.highlight ? 'text-red-200/70' : 'text-black/30'}`}>{p.tagline}</p></div>
-            <div className="text-center mb-12 flex items-baseline justify-center">{p.currency && <span className="text-2xl font-black mr-1">{p.currency}</span>}<span className="text-5xl sm:text-7xl font-black tracking-tighter">{p.price}</span>{p.unit && <span className="text-sm font-bold opacity-60 ml-1">{p.unit}</span>}</div>
-            <div className="space-y-7 mb-14 text-left flex-grow">{p.features.map(f => <div key={f} className="flex gap-5 items-center"><div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${p.highlight ? 'bg-red-500 text-white' : 'bg-red-600 text-white'}`}><CheckCircle2 className="w-4 h-4"/></div><span className="text-lg font-bold">{f}</span></div>)}</div>
-            <button onClick={() => scrollToAnchor('contact')} className={`w-full py-6 rounded-3xl font-black text-xl transition-all ${p.highlight ? 'bg-white text-[#0a192f] hover:bg-red-50' : 'bg-black/5 hover:bg-black/10'}`}>{p.price === '定制' ? '申请架构方案' : '锁定物理机位'}</button>
-          </div>
-        ))}</div>
-      </div></section>
-    </>
-  );
+    setMeta('twitter:card', 'summary_large_image')
+    setMeta('twitter:title', current.title)
+    setMeta('twitter:description', current.description)
 
-  // --- 架构方案内容 ---
-  const SolutionPage = () => {
-    const resultCards = [
-      { title: '独立设备', desc: '每个环境对应一台真实 Mac，不是云服务器虚拟实例，不共享底层系统。', icon: Cpu },
-      { title: '独立网络', desc: '每台设备绑定独立本地网络身份，不走代理池，不使用批量数据中心 IP。', icon: Network },
-      { title: '物理可维护', desc: '出现异常时，可从设备、电源、网络、远程访问四个层面排查和处理。', icon: Shield },
-    ];
+    setLink('canonical', `${origin}${path}`)
+    setLink('alternate', `${origin}${path}?lang=zh`, 'zh')
+    setLink('alternate', `${origin}${path}?lang=en`, 'en')
+    setLink('alternate', `${origin}${path}`, 'x-default')
 
-    const topologySteps = [
-      { label: '远程接入层', title: '全球节点接入', desc: '通过专有的加密通道远程登录，仅传输画面信号，不改变环境特征。', icon: MousePointer2, color: 'bg-blue-600' },
-      { label: '逻辑隔离层', title: '网络链路网关', desc: '物理级硬件路由器隔离，确保每台 Mac 拥有独立的内网环境与网关指纹。', icon: Server, color: 'bg-slate-700' },
-      { label: '物理硬件层', title: 'Mac 真机集群', desc: '位于加拿大本地机房的物理 Mac mini，使用原生 macOS 硬件堆栈。', icon: Monitor, color: 'bg-red-600' },
-      { label: '最终出口层', title: '本地住宅 ISP', desc: '连接至当地住宅宽带 ISP，出口 IP 与当地普通居民家庭网络无异。', icon: Globe, color: 'bg-slate-900' },
-    ];
+    const oldSchema = document.getElementById('aurora-schema')
+    if (oldSchema) oldSchema.remove()
 
-    return (
-      <div className="bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <button onClick={() => goToPage('home')} className="group flex items-center gap-3 text-black/40 hover:text-black font-black mb-16 transition-all">
-            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1"/> 返回首页
-          </button>
-          <div className="mb-24">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-red-50 border border-red-100 text-red-600 font-black text-[10px] uppercase mb-8"><Shield className="w-4 h-4" /> 物理隔离架构方案</div>
-            <h1 className="text-5xl sm:text-8xl font-black tracking-tight mb-10 italic uppercase leading-[1.1]">加拿大本地<br /><span className="text-red-600">物理节点架构</span></h1>
-            <p className="text-2xl text-black/45 font-bold max-w-xl">为高价值跨境业务提供真正意义上的物理环境隔离。</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 mb-24">{resultCards.map((card, i) => (
-            <div key={i} className="p-10 rounded-[40px] bg-[#fbfbfd] border border-black/5 shadow-sm">
-              <div className="w-14 h-14 rounded-2xl bg-white text-red-700 flex items-center justify-center mb-8 shadow-sm"><card.icon className="w-7 h-7" /></div>
-              <h3 className="font-black text-2xl mb-4">{card.title}</h3>
-              <p className="text-black/50 font-bold leading-relaxed">{card.desc}</p>
-            </div>
-          ))}</div>
-          <section className="py-24 border-t border-black/5">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
-              <div><h2 className="text-3xl sm:text-5xl font-black uppercase italic mb-4">底层交付拓扑</h2><p className="text-black/40 font-bold">每一层都为环境的真实性与稳定性负责</p></div>
-              <div className="flex items-center gap-4 text-xs font-black uppercase text-black/30"><span className="flex items-center gap-2"><Target className="w-4 h-4"/> 独立部署</span><span className="w-px h-3 bg-black/10" /><span className="flex items-center gap-2"><Power className="w-4 h-4"/> 物理上架</span></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">{topologySteps.map((step, i) => (
-              <div key={i} className="p-8 rounded-[40px] bg-[#fbfbfd] border border-black/5">
-                <div className={`w-12 h-12 rounded-2xl ${step.color} text-white flex items-center justify-center mb-8 shadow-lg`}><step.icon className="w-6 h-6" /></div>
-                <div className="text-[10px] font-black uppercase text-red-600 mb-2 tracking-widest">{step.label}</div>
-                <h4 className="text-xl font-black mb-4">{step.title}</h4>
-                <p className="text-sm text-black/40 font-bold leading-relaxed">{step.desc}</p>
-              </div>
-            ))}</div>
-          </section>
-          <section className="py-24 border-t border-black/5">
-            <div className="max-w-4xl">
-              <h2 className="text-4xl sm:text-6xl font-black mb-12">关于“真实性”的坚持</h2>
-              <div className="space-y-8">
-                <p className="text-xl sm:text-2xl font-bold leading-relaxed text-black/60">在风控技术日益精进的今天，软件层面的“模拟”已经越来越难通过深度硬件特征检测。</p>
-                <div className="flex flex-wrap gap-4 text-2xl sm:text-3xl font-black text-red-600"><span>设备</span><span className="text-black/20">+</span><span>网络</span><span className="text-black/20">+</span><span>使用轨迹</span></div>
-                <p className="text-lg text-black/40 font-bold">我们的目标不是承诺“绕过风控”，而是尽量减少底层环境的不确定性，让业务建立在真实、稳定、可维护的基础之上。</p>
-              </div>
-            </div>
-          </section>
-          <section className="mt-12 p-12 sm:p-20 rounded-[60px] bg-[#0a192f] text-white text-center">
-            <h2 className="text-4xl sm:text-6xl font-black mb-8">我们不是在帮你“换 IP”</h2>
-            <p className="text-xl sm:text-2xl text-red-300 font-black mb-12">我们是在帮你建立一个长期可用的真实远程环境</p>
-            <button onClick={() => scrollToAnchor('contact')} className="px-12 py-6 bg-white text-[#0a192f] font-black rounded-3xl text-xl hover:scale-105 transition-all">申请物理机位</button>
-          </section>
-        </div>
-      </div>
-    );
-  };
+    const schema = document.createElement('script')
+    schema.id = 'aurora-schema'
+    schema.type = 'application/ld+json'
+    schema.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: lang === 'zh' ? '加拿大本地独享 Mac mini 物理工作站与住宅级网络环境' : 'Dedicated Canadian Mac mini Workstation with Local Residential / Office Network',
+      provider: {
+        '@type': 'Organization',
+        name: 'AURORA SITE SOLUTIONS LTD.',
+        url: origin
+      },
+      areaServed: ['Canada', 'China', 'Global'],
+      serviceType:
+        lang === 'zh'
+          ? '加拿大本地物理工作站、住宅级网络环境、独立静态 IP、远程设备环境、多平台跨境后台运营环境'
+          : 'Canada-based local physical workstation, residential and office network environment, dedicated static IP, remote device environment, multi-platform cross-border backend operation environment',
+      description: current.description,
+      offers: {
+        '@type': 'Offer',
+        price: '699',
+        priceCurrency: 'CAD',
+        availability: 'https://schema.org/InStock'
+      }
+    })
+    document.head.appendChild(schema)
+  }, [lang, page])
 
-  // --- 招聘页面内容 ---
-  const CareersPage = () => {
-    const locations = [
-      { city: 'Calgary, AB', status: 'Current Priority', desc: '当前优先建立现场响应能力' },
-      { city: 'Regina, SK', status: 'Future Network', desc: '根据节点部署计划开放合作' },
-      { city: 'Moose Jaw, SK', status: 'Future Network', desc: '可先提交合作意向' },
-    ];
+  const go = (target: Page) => {
+    const nextPath = pagePath(target)
+    setPage(target)
+    setMenuOpen(false)
 
-    const tasks = [
-      '协助完成 Mac 真机设备的上架、联网与初始化配置。',
-      '在设备出现硬件或网络异常时，提供快速的现场排查与重启服务。',
-      '定期对机位环境进行基础巡检（散热、电源稳定性等）。',
-      '根据业务扩展需求，协助进行本地住宅宽带的链路调试。',
-    ];
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState(null, '', nextPath)
+    }
 
-    const benefits = [
-      { title: '极低时耗', desc: '多数任务为一次性部署或按需响应，不占用大块时间。', icon: Clock },
-      { title: '灵活薪酬', desc: '提供具有竞争力的按次/按小时服务报酬。', icon: Settings },
-      { title: '技术前沿', desc: '接触跨境基础设施的最前沿交付形态。', icon: Wifi },
-    ];
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
-    return (
-      <div className="bg-white pt-32 sm:pt-48 pb-20 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <button onClick={() => goToPage('home')} className="group flex items-center gap-3 text-black/40 hover:text-black font-black mb-16 transition-all">
-            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1"/> 返回首页
-          </button>
-          <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-12">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-red-50 border border-red-100 text-red-600 font-black text-[10px] uppercase mb-8"><MapleLeaf className="w-4 h-4" /> Western Canada Ops Network</div>
-              <h1 className="text-5xl sm:text-8xl font-black tracking-tight mb-10 italic uppercase leading-[1.1]">加入我们的<br /><span className="text-red-600">现场运维网络</span></h1>
-              <p className="text-2xl text-black/45 font-bold">我们在寻找位于加拿大西部的现场合作伙伴，共同维护真实的物理机位基础设施。</p>
-            </div>
-            <div className="bg-[#0a192f] p-10 rounded-[40px] text-white flex-shrink-0">
-              <div className="text-red-400 font-black text-sm uppercase mb-4 tracking-widest italic">Open Positions</div>
-              <div className="text-4xl font-black mb-2">现场兼职运维</div>
-              <div className="text-white/40 font-bold">Field Operations Specialist</div>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-12 mb-24">
-            <div className="space-y-12">
-              <section>
-                <h2 className="text-3xl font-black mb-8 flex items-center gap-3"><MapPin className="text-red-600" /> 目标城市</h2>
-                <div className="space-y-4">{locations.map((loc, i) => (
-                  <div key={i} className="p-8 rounded-[30px] bg-[#fbfbfd] border border-black/5 flex items-center justify-between">
-                    <div><div className="text-xl font-black mb-1">{loc.city}</div><div className="text-black/40 font-bold text-sm">{loc.desc}</div></div>
-                    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${loc.status === 'Current Priority' ? 'bg-red-600 text-white' : 'bg-black/5 text-black/30'}`}>{loc.status}</div>
-                  </div>
-                ))}</div>
-              </section>
-              <section>
-                <h2 className="text-3xl font-black mb-8 flex items-center gap-3"><Wrench className="text-red-600" /> 协作职责</h2>
-                <div className="grid gap-4">{tasks.map((task, i) => (
-                  <div key={i} className="flex gap-4 p-6 rounded-2xl border border-black/5 items-start">
-                    <CheckCircle2 className="w-6 h-6 text-red-600 shrink-0 mt-0.5" /><span className="font-bold text-black/60">{task}</span>
-                  </div>
-                ))}</div>
-              </section>
-            </div>
-            <div className="space-y-12">
-              <section>
-                <h2 className="text-3xl font-black mb-8 flex items-center gap-3"><Box className="text-red-600" /> 合作要求</h2>
-                <div className="p-10 rounded-[40px] bg-[#0a192f] text-white space-y-8">
-                  {[
-                    { t: '居住在上述城市', d: '能够在接到响应请求后，于约定时间内到达机位现场。', i: MapPin },
-                    { t: '有基础硬件经验', d: '了解 Mac 电脑基础操作，熟悉路由器与网络拨号配置。', i: Server },
-                    { t: '具备交通工具', d: '拥有合法驾驶执照和可靠的车辆，方便在城市内移动。', i: Car },
-                  ].map((req, i) => (
-                    <div key={i} className="flex gap-6">
-                      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0"><req.i className="w-6 h-6 text-red-400" /></div>
-                      <div><h4 className="font-black text-xl mb-1">{req.t}</h4><p className="text-white/40 font-bold text-sm leading-relaxed">{req.d}</p></div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h2 className="text-3xl font-black mb-8 flex items-center gap-3"><Activity className="text-red-600" /> 合作权益</h2>
-                <div className="grid gap-6">{benefits.map((b, i) => (
-                  <div key={i} className="p-8 rounded-[30px] bg-[#fbfbfd] border border-black/5 flex gap-6">
-                    <div className="w-12 h-12 rounded-2xl bg-white text-red-600 flex items-center justify-center shrink-0 shadow-sm"><b.icon className="w-6 h-6" /></div>
-                    <div><h4 className="font-black text-xl mb-1">{b.title}</h4><p className="text-black/40 font-bold text-sm">{b.desc}</p></div>
-                  </div>
-                ))}</div>
-              </section>
-            </div>
-          </div>
-          <section className="p-10 sm:p-20 rounded-[60px] bg-[#fbfbfd] border border-black/10 relative overflow-hidden">
-            <div className="relative z-10 grid md:grid-cols-2 gap-16 items-center">
-              <div>
-                <h3 className="text-4xl sm:text-6xl font-black mb-8 leading-tight italic uppercase">开启合作<br /><span className="text-red-600">Start Operation</span></h3>
-                <p className="text-xl text-black/40 font-bold mb-8 leading-relaxed">我们重视每一位现场合作伙伴。如果你居住在上述城市且对建立真实的物理节点基础设施感兴趣，请联系我们。</p>
-                <a href="mailto:careers@aurorasitesolutions.ca" className="inline-flex items-center gap-4 px-12 py-6 bg-[#0a192f] text-white font-black rounded-3xl text-xl hover:shadow-2xl transition-all group">提交合作意向 <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" /></a>
-              </div>
-              <div className="space-y-6">
-                <div className="bg-white rounded-[40px] p-8 border border-black/5 shadow-sm">
-                  <h4 className="text-xl font-black mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-red-600" /> 为什么需要现场运维？</h4>
-                  <p className="text-black/50 font-bold leading-relaxed">我们的服务不是纯软件代理，而是依赖真实本地设备和可维护的物理基础设施。现场运维合作网络，是保证设备长期稳定的重要组成部分。</p>
-                </div>
-                <div className="bg-white rounded-[40px] p-8 border border-black/5 shadow-sm">
-                  <h4 className="text-xl font-black mb-4 flex items-center gap-2"><Mail className="w-5 h-5 text-red-600" /> 联系方式</h4>
-                  <p className="text-black/50 font-bold mb-5">请发送简历、所在城市、交通方式、可响应时间，以及你熟悉的硬件/网络经验。</p>
-                  <a href="mailto:careers@aurorasitesolutions.ca" className="text-red-700 font-black underline underline-offset-4">careers@aurorasitesolutions.ca</a>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-        <footer className="mt-24 py-12 text-center text-[10px] text-black/20 font-black border-t border-black/5 uppercase tracking-[0.3em] leading-relaxed">
-          © 2026 AURORA SITE SOLUTIONS LTD. · Field Operations Network · Western Canada
-        </footer>
-      </div>
-    );
-  };
+  const toggleLang = () => {
+    setLang(prev => {
+      const next = prev === 'zh' ? 'en' : 'zh'
+      localStorage.setItem('lang', next)
+      return next
+    })
+  }
+
+  const scrollTo = (id: string) => {
+    setMenuOpen(false)
+    if (page !== 'home') {
+      setPage('home')
+
+      if (window.location.pathname !== '/') {
+        window.history.pushState(null, '', '/')
+      }
+
+      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const togglePrivacy = () => setPrivacyOpen(!privacyOpen)
 
   return (
-    <div className="min-h-screen bg-[#fbfbfd] text-[#1d1d1f] font-sans selection:bg-red-200 overflow-x-hidden">
-      {/* 导航栏 */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-2xl py-3 border-b border-black/5' : 'py-6'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-          <div onClick={() => goToPage('home')} className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 rounded-2xl bg-[#0a192f] text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Zap className="w-5 h-5 fill-current"/>
+    <div className={`min-h-screen bg-[#F5F7F6] text-[#0d1b16] ${privacyOpen ? 'overflow-hidden' : ''}`}>
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-[#F5F7F6]/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+          <button onClick={() => go('home')} className="flex items-center gap-3 text-left">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A3D2E] text-white">
+              <Monitor className="h-5 w-5" />
             </div>
-            <div className="leading-tight">
-              <div className="font-black tracking-tight text-sm sm:text-lg">AURORA SITE SOLUTIONS</div>
-              <div className="hidden sm:block text-[10px] uppercase text-black/40 font-bold italic">Calgary Physical Node Ops</div>
+            <div>
+              <div className="text-lg font-black tracking-tight">AURORA SITE SOLUTIONS</div>
+              <div className="text-xs font-semibold text-black/45 uppercase tracking-wider">Canada-based infrastructure</div>
             </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-8 text-sm font-black uppercase tracking-widest text-black/60">
-            {[['首页', 'home'], ['架构方案', 'solution'], ['加入我们', 'careers']].map(([l, p]: any) => (
-              <button 
-                key={p} 
-                onClick={() => goToPage(p)} 
-                className={`hover:text-red-600 transition-colors ${currentPage === p ? 'text-red-600' : ''}`}
-              >
-                {l}
-              </button>
-            ))}
-            <button onClick={() => scrollToAnchor('pricing')} className="hover:text-red-600">资费说明</button>
-          </div>
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-10 h-10 rounded-full border border-black/10 bg-white flex items-center justify-center"
-              aria-label="打开导航菜单"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <nav className="hidden items-center gap-6 text-sm font-bold text-black/65 md:flex">
+            <button onClick={() => go('home')} className="hover:text-[#0A3D2E]">{t.nav.home}</button>
+            <button onClick={() => go('architecture')} className="hover:text-[#0A3D2E]">{t.nav.arch}</button>
+            <button onClick={() => go('careers')} className="hover:text-[#0A3D2E]">{t.nav.careers}</button>
+            <button onClick={() => scrollTo('pricing')} className="hover:text-[#0A3D2E]">{t.nav.pricing}</button>
+            <button onClick={toggleLang} className="flex items-center gap-1 rounded-full border border-black/10 px-3 py-1.5 text-xs hover:bg-black/5">
+              <Languages className="h-3.5 w-3.5" />
+              {lang === 'zh' ? 'EN' : '中文'}
             </button>
+            <button onClick={() => scrollTo('contact')} className="rounded-full bg-[#0A3D2E] px-5 py-3 text-white hover:bg-[#D32F2F] transition-colors shadow-lg shadow-[#0A3D2E]/20">
+              {t.nav.cta}
+            </button>
+          </nav>
 
-            <button
-              onClick={() => scrollToAnchor('contact')}
-              className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0a192f] text-white text-sm font-black hover:shadow-xl hover:scale-105 transition-all"
-            >
-              开始部署
+          <div className="flex items-center gap-3 md:hidden">
+            <button onClick={toggleLang} className="flex items-center gap-1 rounded-full border border-black/10 px-3 py-1.5 text-xs">
+              <Languages className="h-3.5 w-3.5" />
+              {lang === 'zh' ? 'EN' : '中文'}
+            </button>
+            <button onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X /> : <Menu />}
             </button>
           </div>
         </div>
 
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-black/5 bg-white/95 backdrop-blur-2xl">
-            <div className="px-4 py-4 space-y-2 text-sm font-black">
-              <button
-                onClick={() => goToPage('home')}
-                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'home' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
-              >
-                首页
-              </button>
+        {menuOpen && (
+          <div className="mx-5 mb-4 rounded-3xl border border-black/5 bg-white p-4 shadow-xl md:hidden">
+            <button onClick={() => go('home')} className="block w-full rounded-2xl px-4 py-4 text-left font-bold hover:bg-black/5">{t.nav.home}</button>
+            <button onClick={() => go('architecture')} className="block w-full rounded-2xl px-4 py-4 text-left font-bold hover:bg-black/5">{t.nav.arch}</button>
+            <button onClick={() => go('careers')} className="block w-full rounded-2xl px-4 py-4 text-left font-bold hover:bg-black/5">{t.nav.careers}</button>
+            <button onClick={() => scrollTo('pricing')} className="block w-full rounded-2xl px-4 py-4 text-left font-bold hover:bg-black/5">{t.nav.pricing}</button>
+            <button onClick={() => scrollTo('contact')} className="block w-full rounded-2xl px-4 py-4 text-left font-bold hover:bg-[#0A3D2E] hover:text-white transition-colors">{t.nav.cta}</button>
+          </div>
+        )}
+      </header>
 
-              <button
-                onClick={() => goToPage('solution')}
-                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'solution' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
-              >
-                架构方案
-              </button>
+      {page === 'home' && <HomePage lang={lang} t={t} sent={sent} setSent={setSent} scrollTo={scrollTo} go={go} togglePrivacy={togglePrivacy} />}
+      {page === 'architecture' && <ArchitecturePage t={t} scrollTo={scrollTo} />}
+      {page === 'careers' && <CareersPage t={t} togglePrivacy={togglePrivacy} />}
 
-              <button
-                onClick={() => scrollToAnchor('pricing')}
-                className="w-full text-left px-4 py-4 rounded-2xl text-black/70"
-              >
-                资费说明
-              </button>
+      <footer className="border-t border-black/5 px-5 py-12 text-center bg-white">
+        <div className="mb-6 flex justify-center space-x-6 text-xs font-bold uppercase tracking-widest text-black/35">
+          <button onClick={togglePrivacy} className="hover:text-[#0A3D2E] transition-colors uppercase">{t.privacy.title}</button>
+          <span className="opacity-20">|</span>
+          <span>AURORA SITE SOLUTIONS LTD.</span>
+        </div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-black/25">{t.footer}</p>
+      </footer>
 
-              <button
-                onClick={() => goToPage('careers')}
-                className={`w-full text-left px-4 py-4 rounded-2xl ${currentPage === 'careers' ? 'bg-red-50 text-red-600' : 'text-black/70'}`}
-              >
-                加入我们
+      {privacyOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative h-full max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-[2.5rem] bg-white p-8 shadow-2xl md:p-12">
+            <button onClick={togglePrivacy} className="sticky top-0 float-right flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F7F6] text-black/40 hover:bg-black/5 hover:text-black">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="clear-both" />
+            <h2 className="mb-2 text-3xl font-black tracking-tight">{t.privacy.title}</h2>
+            <p className="mb-8 text-sm font-bold text-black/40">{t.privacy.effectiveDate}</p>
+            <p className="mb-8 text-lg leading-relaxed text-black/70">{t.privacy.intro}</p>
+            <div className="space-y-8">
+              {t.privacy.sections.map((section: any, idx: number) => (
+                <div key={idx}>
+                  <h3 className="mb-3 text-xl font-black text-[#0A3D2E]">{section.h}</h3>
+                  <p className="leading-7 text-black/60">{section.p}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-12 border-t border-black/5 pt-8 text-center">
+              <button onClick={togglePrivacy} className="rounded-2xl bg-[#0A3D2E] px-8 py-3 font-bold text-white shadow-lg shadow-[#0A3D2E]/20 hover:bg-[#D32F2F]">
+                Close
               </button>
             </div>
           </div>
-        )}
-      </nav>
-
-      <main>
-        {currentPage === 'home' && <HomePage />}
-        {currentPage === 'solution' && <SolutionPage />}
-        {currentPage === 'careers' && <CareersPage />}
-
-        {/* 联系表单区块 */}
-        {currentPage !== 'careers' && (
-          <section id="contact" className="py-32 px-4 sm:px-6 bg-[#0a192f]">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-20 text-white">
-                <h2 className="text-5xl sm:text-7xl font-black italic uppercase mb-8">部署您的专属物理节点</h2>
-                <p className="text-xl text-white/40 font-bold max-w-2xl mx-auto">我们将根据您的业务场景、目标 IP 区域和设备规模，提供针对性的物理交付方案。</p>
-              </div>
-              <div className="bg-[#fbfbfd] rounded-[60px] p-8 sm:p-20 shadow-3xl">
-                {!formSubmitted ? (
-                  <form onSubmit={handleSubmit} className="space-y-12">
-                    <div className="grid sm:grid-cols-2 gap-10">
-                      {[['称呼 / Name', '您的称呼'], ['联系方式', 'Telegram / 微信 / Email']].map(([l, p]) => (
-                        <div key={l} className="space-y-4">
-                          <label className="text-xs font-black uppercase text-black/30 ml-4 italic">{l}</label>
-                          <input required placeholder={p} className="w-full rounded-3xl bg-black/5 px-8 py-7 outline-none focus:bg-white border-2 border-transparent focus:border-red-500/20 transition-all font-black text-xl" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="space-y-4">
-                      <label className="text-xs font-black uppercase text-black/30 ml-4 italic">业务场景需求</label>
-                      <textarea required rows={4} placeholder="例如：TikTok 美区直播、Stripe 运营环境..." className="w-full rounded-3xl bg-black/5 px-8 py-7 outline-none focus:bg-white border-2 border-transparent focus:border-red-500/20 transition-all resize-none font-black text-xl" />
-                    </div>
-                    <button type="submit" className="w-full py-8 rounded-3xl bg-[#0a192f] text-white font-black text-2xl flex items-center justify-center gap-4 hover:shadow-3xl transition-all group">
-                      提交部署申请 <Send className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </form>
-                ) : (
-                  <div className="py-32 text-center">
-                    <div className="w-32 h-32 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-10"><CheckCircle2 className="w-16 h-16 text-[#0a192f]" /></div>
-                    <h2 className="text-4xl font-black mb-6">申请已提交确认</h2>
-                    <p className="text-red-800 font-bold">我们将尽快确认交付细节。</p>
-                    <button onClick={() => setFormSubmitted(false)} className="mt-12 text-[#0a192f] font-black underline underline-offset-8 uppercase">重新提交</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
-
-      {currentPage !== 'careers' && (
-        <footer className="py-20 px-6 text-center border-t border-black/5">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="text-left">
-              <p className="text-[10px] text-black/40 font-black uppercase tracking-[0.3em] mb-2 leading-relaxed">© 2026 AURORA SITE SOLUTIONS LTD. · 加拿大本地物理节点 · 专属 Mac 真机环境</p>
-              <p className="text-[9px] text-black/20 font-bold uppercase tracking-[0.2em]">CALGARY, ALBERTA PHYSICAL INFRASTRUCTURE · 具体节点区域以交付确认为准</p>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded bg-black/5 flex items-center justify-center"><Shield className="w-4 h-4 text-black/20" /></div>
-              <div className="w-8 h-8 rounded bg-black/5 flex items-center justify-center"><Globe className="w-4 h-4 text-black/20" /></div>
-            </div>
-          </div>
-        </footer>
+        </div>
       )}
-
-      <style>{`
-        html { scroll-behavior: smooth; }
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0,0,0,0.12); }
-        ::selection { background: #dc2626; color: white; }
-      `}</style>
     </div>
-  );
+  )
+}
+
+function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) {
+  return (
+    <main>
+      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-20 pt-16 lg:grid-cols-[1.05fr_.95fr] lg:pt-24">
+        <div>
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[#D32F2F]" />
+            {t.hero.tag}
+          </div>
+
+          <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] text-[#07130f] md:text-7xl">
+            {lang === 'zh' ? (
+              <>
+                加拿大独享 Mac mini 设备<br />
+                <span className="text-[#0A3D2E]">住宅级网络 · 跨境运营环境</span>
+              </>
+            ) : (
+              <>
+                Dedicated Canadian Device Environments<br />
+                <span className="text-[#0A3D2E]">with Local Residential / Office Network Access</span>
+              </>
+            )}
+          </h1>
+
+          <p className="mt-8 max-w-2xl text-xl leading-8 text-black/60">{t.hero.desc}</p>
+          <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#0A3D2E]">{t.hero.punch}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">{t.hero.note}</p>
+
+          <div className="mt-8 grid max-w-3xl gap-4 sm:grid-cols-3">
+            {[t.hero.card1, t.hero.card2, t.hero.card3].map(([title, desc, Icon]: any) => (
+              <article key={title} className="rounded-3xl border border-black/5 bg-white p-5 shadow-sm">
+                <Icon className="mb-4 h-6 w-6 text-[#2F7D5B]" />
+                <div className="font-black">{title}</div>
+                <div className="mt-1 text-sm leading-5 text-black/50">{desc}</div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <button aria-label={lang === 'zh' ? '申请加拿大独享 Mac mini 设备部署' : 'Request dedicated Mac mini setup in Canada'} onClick={() => scrollTo('contact')} className="group rounded-3xl bg-[#0A3D2E] px-9 py-5 text-lg font-black text-white shadow-2xl shadow-[#0A3D2E]/20 transition hover:scale-[1.02] hover:bg-[#D32F2F]">
+              {t.hero.btn1} <ArrowRight className="ml-2 inline h-5 w-5 transition group-hover:translate-x-1" />
+            </button>
+            <button
+              aria-label={lang === 'zh' ? '查看 Aurora 技术架构' : 'View Aurora technical architecture'}
+              onClick={() => go('architecture')}
+              className="rounded-3xl border border-black/10 bg-white px-9 py-5 text-lg font-black hover:bg-black/5"
+            >
+              {t.hero.btn2}
+            </button>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 rounded-[3rem] bg-[#0A3D2E]/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[3rem] border border-white bg-white p-6 shadow-2xl">
+            <div className="rounded-[2rem] bg-[#0B1411] p-7 text-white">
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-white/50">{t.liveNode.title}</div>
+                  <div className="text-2xl font-black">{t.liveNode.loc}</div>
+                </div>
+                <Globe2 className="h-9 w-9 text-[#D32F2F]" />
+              </div>
+              <div className="mb-8 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 p-6 border border-white/5">
+                <div className="mx-auto h-28 w-56 rounded-3xl bg-gradient-to-br from-[#f0f0f0] to-[#cccccc] shadow-2xl flex items-center justify-center">
+                  <div className="text-xs font-black text-black/20 uppercase tracking-tighter">Aurora physical unit</div>
+                </div>
+                <div className="mx-auto mt-5 h-3 w-44 rounded-full bg-black/30" />
+              </div>
+              {[
+                [t.liveNode.device, t.liveNode.deviceVal],
+                [t.liveNode.net, t.liveNode.netVal],
+                [t.liveNode.access, t.liveNode.accessVal],
+                [t.liveNode.isolation, t.liveNode.isolationVal],
+              ].map(([a, b]) => (
+                <div key={a} className="flex justify-between border-t border-white/10 py-4 text-sm">
+                  <span className="text-white/45">{a}</span>
+                  <span className="font-bold">{b}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="solution" className="mx-auto max-w-7xl px-5 py-20">
+        <div className="mb-12 max-w-3xl">
+          <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.solution.tag}</div>
+          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.solution.title}</h2>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {[t.solution.card1, t.solution.card2, t.solution.card3].map(([title, desc, Icon]: any) => (
+            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-8 shadow-sm group hover:border-[#0A3D2E]/20 transition-colors">
+              <Icon className="mb-8 h-9 w-9 text-[#2F7D5B]" />
+              <h3 className="text-2xl font-black group-hover:text-[#0A3D2E] transition-colors">{title}</h3>
+              <p className="mt-4 leading-7 text-black/55">{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <UseCasesSection t={t} />
+
+      <section id="compare" className="mx-auto max-w-7xl px-5 py-20">
+        <div className="overflow-hidden rounded-[2.5rem] bg-[#0B1411] p-6 text-white md:p-10 border border-white/5">
+          <div className="mb-10 max-w-3xl">
+            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{t.compare.title}</h2>
+            <p className="mt-5 text-lg text-white/55">{t.compare.desc}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              [t.compare.vps, t.compare.vpsItems],
+              [t.compare.aurora, t.compare.auroraItems],
+            ].map(([title, items]: any) => (
+              <article key={title} className={`rounded-[2rem] border p-7 ${title === t.compare.aurora ? 'border-[#2F7D5B]/30 bg-[#2F7D5B]/10' : 'border-white/10 bg-white/5'}`}>
+                <h3 className="mb-6 text-2xl font-black">{title}</h3>
+                {items.map((x: string) => (
+                  <div key={x} className="flex items-center gap-3 border-t border-white/10 py-4">
+                    <CheckCircle2 className={`h-5 w-5 ${title === t.compare.aurora ? 'text-[#2F7D5B]' : 'text-white/30'}`} />
+                    <span className="font-semibold text-white/80">{x}</span>
+                  </div>
+                ))}
+              </article>
+            ))}
+          </div>
+          <button onClick={() => go('architecture')} className="mt-8 inline-flex items-center rounded-full bg-white px-6 py-4 font-black text-[#0B1411] hover:bg-[#D32F2F] hover:text-white transition-all">
+            {t.compare.cta} <ChevronRight className="ml-2 h-5 w-5" />
+          </button>
+        </div>
+      </section>
+
+      <section id="pricing" className="mx-auto max-w-7xl px-5 py-20">
+        <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr]">
+          <div>
+            <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.pricing.tag}</div>
+            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.pricing.title}</h2>
+            <p className="mt-6 text-lg leading-8 text-black/55">{t.pricing.desc}</p>
+          </div>
+          <article className="rounded-[2.5rem] border-2 border-[#D32F2F]/10 bg-white p-8 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-32 w-32 bg-[#D32F2F]/5 rounded-bl-full -mr-10 -mt-10" />
+            <div className="mb-6 inline-flex rounded-full bg-[#ffe5e5] px-4 py-2 text-sm font-black text-[#D32F2F]">{t.pricing.planName}</div>
+            <div className="flex items-end gap-3">
+              <span className="text-6xl font-black tracking-[-0.06em] text-[#D32F2F]">{t.pricing.price}</span>
+              <span className="pb-3 text-lg font-bold text-black/50">{t.pricing.unit}</span>
+            </div>
+            <div className="mt-8 grid gap-4">
+              {t.pricing.features.map((x: string) => (
+                <div key={x} className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-[#2F7D5B]" />
+                  <span className="font-semibold text-black/80">{x}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => scrollTo('contact')} className="mt-9 w-full rounded-3xl bg-[#0A3D2E] py-5 text-lg font-black text-white hover:bg-[#D32F2F] shadow-xl shadow-[#0A3D2E]/20 transition-all">
+              {t.pricing.cta}
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <ContactSection t={t} sent={sent} setSent={setSent} togglePrivacy={togglePrivacy} />
+    </main>
+  )
+}
+
+function UseCasesSection({ t }: any) {
+  return (
+    <section className="mx-auto max-w-7xl px-5 py-20 bg-white rounded-[4rem] border border-black/5 shadow-sm">
+      <div className="mb-12 max-w-4xl px-5">
+        <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.useCases.tag}</div>
+        <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.useCases.title}</h2>
+        <p className="mt-6 max-w-3xl text-lg leading-8 text-black/55">{t.useCases.desc}</p>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 px-5">
+        {t.useCases.items.map(([title, desc, Icon]: any) => (
+          <article key={title} className="rounded-[2rem] border border-black/5 bg-[#F5F7F6] p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:border-[#0A3D2E]/10">
+            <Icon className="mb-6 h-8 w-8 text-[#2F7D5B]" />
+            <h3 className="text-xl font-black">{title}</h3>
+            <p className="mt-4 leading-7 text-black/55 text-sm">{desc}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ArchitecturePage({ t, scrollTo }: any) {
+  const at = t.archPage
+  return (
+    <main>
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:py-28">
+        <div className="max-w-4xl">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
+            <Router className="h-4 w-4" />
+            {at.tag}
+          </div>
+          <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
+            {at.title}<br />
+            <span className="text-[#0A3D2E]">{at.titleHighlight}</span>
+          </h1>
+          <p className="mt-8 max-w-3xl text-xl leading-8 text-black/60">{at.desc}</p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-20">
+        <div className="rounded-[3rem] bg-[#0B1411] p-6 text-white md:p-10 border border-white/5">
+          <div className="grid gap-5 lg:grid-cols-4">
+            {at.cards.map(([title, desc, Icon]: any) => (
+              <article key={title} className="rounded-[2rem] border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition-colors">
+                <Icon className="mb-6 h-8 w-8 text-[#2F7D5B]" />
+                <h3 className="text-xl font-black">{title}</h3>
+                <p className="mt-3 leading-7 text-white/55">{desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
+          <div>
+            <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{at.flowTitle}</div>
+            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{at.flowSub}</h2>
+            <p className="mt-6 text-lg leading-8 text-black/55">{at.flowDesc}</p>
+          </div>
+          <div className="rounded-[2.5rem] border border-black/5 bg-white p-6 shadow-xl md:p-8">
+            {at.flowSteps.map(([num, title, desc]: any) => (
+              <article key={num} className="flex gap-5 border-b border-black/5 py-6 last:border-b-0">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A3D2E] font-black text-white">{num}</div>
+                <div>
+                  <h3 className="text-xl font-black">{title}</h3>
+                  <p className="mt-2 leading-7 text-black/55">{desc}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="mb-10 max-w-3xl">
+          <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Infrastructure</div>
+          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{at.infraTitle}</h2>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {at.infraCards.map(([title, desc, Icon]: any) => (
+            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-7 shadow-sm group hover:border-[#0A3D2E]/20 transition-colors">
+              <Icon className="mb-6 h-8 w-8 text-[#2F7D5B]" />
+              <h3 className="text-xl font-black group-hover:text-[#0A3D2E] transition-colors">{title}</h3>
+              <p className="mt-3 leading-7 text-black/55">{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-20">
+        <div className="rounded-[3rem] bg-white p-8 shadow-xl md:p-12 border border-black/5">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+            <div>
+              <h2 className="text-4xl font-black tracking-[-0.04em]">{at.boundaryTitle}</h2>
+              <p className="mt-5 leading-8 text-black/55">{at.boundaryDesc}</p>
+            </div>
+            <div className="grid gap-4">
+              {at.boundaries.map((x: string) => (
+                <div key={x} className="flex gap-3 rounded-2xl bg-[#F5F7F6] p-4 border border-black/5">
+                  <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-[#2F7D5B]" />
+                  <span className="font-semibold text-black/65">{x}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button onClick={() => scrollTo('contact')} className="mt-10 rounded-3xl bg-[#0A3D2E] px-8 py-5 text-lg font-black text-white hover:bg-[#D32F2F] transition-colors shadow-lg shadow-[#0A3D2E]/20">
+            {t.nav.cta} <ArrowRight className="ml-2 inline h-5 w-5" />
+          </button>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function CareersPage({ t, togglePrivacy }: any) {
+  const ct = t.careers
+  return (
+    <main>
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:py-28">
+        <div className="max-w-4xl">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
+            <Users className="h-4 w-4" />
+            {ct.tag}
+          </div>
+          <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
+            {ct.title}<br />
+            <span className="text-[#0A3D2E]">{ct.titleHighlight}</span>
+          </h1>
+          <p className="mt-8 max-w-3xl text-xl leading-8 text-black/60">{ct.desc}</p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-20">
+        <div className="grid gap-5 md:grid-cols-4">
+          {ct.cards.map(([title, desc, Icon]: any) => (
+            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-7 shadow-sm hover:border-[#0A3D2E]/20 transition-colors">
+              <Icon className="mb-6 h-8 w-8 text-[#2F7D5B]" />
+              <h3 className="text-xl font-black">{title}</h3>
+              <p className="mt-3 leading-7 text-black/55">{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <article className="rounded-[2.5rem] bg-white p-8 shadow-xl border border-black/5">
+            <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Type 1</div>
+            <h2 className="text-4xl font-black tracking-[-0.04em]">{ct.techTitle}</h2>
+            <p className="mt-5 leading-8 text-black/55">{ct.techDesc}</p>
+            <div className="mt-8 grid gap-4">
+              {ct.techTasks.map(([title, desc]: any) => (
+                <div key={title} className="rounded-2xl bg-[#F5F7F6] p-5 border border-black/5">
+                  <div className="font-black text-[#0A3D2E]">{title}</div>
+                  <div className="mt-1 text-sm leading-6 text-black/55">{desc}</div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-[2.5rem] bg-[#0B1411] p-8 text-white shadow-2xl border border-white/5">
+            <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Type 2</div>
+            <h2 className="text-4xl font-black tracking-[-0.04em]">{ct.hostTitle}</h2>
+            <p className="mt-5 leading-8 text-white/60">{ct.hostDesc}</p>
+            <div className="mt-8 grid gap-4">
+              {ct.hostTasks.map(([title, desc]: any) => (
+                <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="font-black text-[#2F7D5B]">{title}</div>
+                  <div className="mt-1 text-sm leading-6 text-white/60">{desc}</div>
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="mb-10 max-w-3xl">
+          <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{ct.whoSub}</div>
+          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{ct.whoTitle}</h2>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          <article className="rounded-[2.5rem] border border-black/5 bg-white p-8 shadow-sm">
+            <h3 className="mb-6 text-2xl font-black">{ct.fitTitle}</h3>
+            {ct.fitItems.map((x: string) => (
+              <div key={x} className="flex gap-3 border-t border-black/5 py-4">
+                <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-[#2F7D5B]" />
+                <span className="font-semibold text-black/65">{x}</span>
+              </div>
+            ))}
+          </article>
+          <article className="rounded-[2.5rem] border border-black/5 bg-white p-8 shadow-sm">
+            <h3 className="mb-6 text-2xl font-black">{ct.plusTitle}</h3>
+            {ct.plusItems.map((x: string) => (
+              <div key={x} className="flex gap-3 border-t border-black/5 py-4">
+                <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-[#2F7D5B]" />
+                <span className="font-semibold text-black/65">{x}</span>
+              </div>
+            ))}
+          </article>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="rounded-[3rem] bg-white p-8 shadow-xl md:p-12 border border-black/5">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+            <div>
+              <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Apply</div>
+              <h2 className="text-4xl font-black tracking-[-0.04em]">{ct.applyTitle}</h2>
+              <p className="mt-5 leading-8 text-black/55">{ct.applyDesc}</p>
+              <div className="mt-8 rounded-[2rem] bg-[#F5F7F6] p-6 border border-black/5">
+                <div className="flex items-center gap-3 font-black text-[#0A3D2E]">
+                  <Mail className="h-5 w-5 text-[#2F7D5B]" />
+                  contact@aurorasitesolutions.com
+                </div>
+                <p className="mt-3 text-sm leading-6 text-black/50 font-bold uppercase tracking-tighter">
+                  Subject: Local Partnership Application
+                </p>
+              </div>
+            </div>
+
+            <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); alert(ct.applyForm.toast) }}>
+              <input required placeholder={ct.applyForm.name} className="rounded-3xl border border-black/10 bg-[#F5F7F6] px-6 py-5 font-semibold outline-none focus:border-[#0A3D2E]" />
+              <input required placeholder={ct.applyForm.contact} className="rounded-3xl border border-black/10 bg-[#F5F7F6] px-6 py-5 font-semibold outline-none focus:border-[#0A3D2E]" />
+              <input required placeholder={ct.applyForm.area} className="rounded-3xl border border-black/10 bg-[#F5F7F6] px-6 py-5 font-semibold outline-none focus:border-[#0A3D2E]" />
+              <input required placeholder={ct.applyForm.type} className="rounded-3xl border border-black/10 bg-[#F5F7F6] px-6 py-5 font-semibold outline-none focus:border-[#0A3D2E]" />
+              <textarea required placeholder={ct.applyForm.bio} rows={5} className="rounded-3xl border border-black/10 bg-[#F5F7F6] px-6 py-5 font-semibold outline-none focus:border-[#0A3D2E]" />
+              <div className="flex items-start gap-3 p-2">
+                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-black/10 text-[#0A3D2E] focus:ring-[#0A3D2E]" />
+                <label className="text-xs leading-normal text-black/40">
+                  {t.privacy.checkbox}{' '}
+                  <button type="button" onClick={togglePrivacy} className="font-bold text-[#0A3D2E] underline">
+                    {t.privacy.title}
+                  </button>
+                </label>
+              </div>
+              <div className="flex items-start gap-3 p-2">
+                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-black/10 text-[#0A3D2E] focus:ring-[#0A3D2E]" />
+                <label className="text-xs leading-normal text-black/40">{t.privacy.useCheckbox}</label>
+              </div>
+              <button className="rounded-3xl bg-[#0A3D2E] px-8 py-5 text-lg font-black text-white hover:bg-[#D32F2F] shadow-lg shadow-[#0A3D2E]/20 transition-all">
+                {ct.applyForm.submit}
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function ContactSection({ t, sent, setSent, togglePrivacy }: any) {
+  const ct = t.contact
+  return (
+    <section id="contact" className="px-5 py-24">
+      <div className="mx-auto max-w-4xl rounded-[3rem] bg-[#0B1411] p-8 text-white shadow-2xl md:p-12 border border-white/5">
+        {!sent ? (
+          <>
+            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">
+              {ct.title.split('?')[0]}<span className="text-[#D32F2F]">?</span>
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-white/65">{ct.desc}</p>
+            <form className="mt-10 grid gap-4" onSubmit={(e) => { e.preventDefault(); setSent(true) }}>
+              <input required placeholder={ct.form.name} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+              <input required placeholder={ct.form.contact} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+              <textarea required placeholder={ct.form.message} rows={5} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+              <div className="flex items-start gap-3 px-2 py-4">
+                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
+                <label className="text-xs leading-normal text-white/50">
+                  {t.privacy.checkbox}{' '}
+                  <button type="button" onClick={togglePrivacy} className="font-bold text-white underline">
+                    {t.privacy.title}
+                  </button>
+                </label>
+              </div>
+              <div className="flex items-start gap-3 px-2 py-4">
+                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
+                <label className="text-xs leading-normal text-white/50">{t.privacy.useCheckbox}</label>
+              </div>
+              <button className="rounded-3xl bg-[#0A3D2E] px-8 py-5 text-lg font-black text-white hover:bg-[#D32F2F] shadow-xl shadow-[#0A3D2E]/20 transition-all">
+                {ct.form.submit}
+              </button>
+            </form>
+            <div className="mt-8 flex items-center gap-3 text-white/40 text-sm font-bold uppercase tracking-widest">
+              <Mail className="h-4 w-4 text-[#2F7D5B]" />
+              <span>contact@aurorasitesolutions.com</span>
+            </div>
+          </>
+        ) : (
+          <div className="py-12 text-center">
+            <CheckCircle2 className="mx-auto mb-6 h-16 w-16 text-[#2F7D5B]" />
+            <h2 className="text-4xl font-black">{ct.successTitle}</h2>
+            <p className="mt-4 text-white/65">{ct.successDesc}</p>
+            <button onClick={() => setSent(false)} className="mt-8 font-black underline underline-offset-8 text-[#2F7D5B] hover:text-white transition-colors">
+              {t.contact.resend}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  )
 }
