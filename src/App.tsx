@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import {
   ArrowRight, CheckCircle2, Shield, Monitor, Globe2, Server,
   Lock, MapPin, Cpu, Mail, Menu, X, Network, Router,
@@ -10,6 +10,8 @@ import {
 
 type Page = 'home' | 'architecture' | 'careers'
 type Language = 'zh' | 'en'
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqenelnp'
 
 const pagePath = (target: Page) => {
   if (target === 'architecture') return '/architecture'
@@ -23,6 +25,19 @@ const pageFromPath = (): Page => {
   if (path.startsWith('/architecture')) return 'architecture'
   if (path.startsWith('/careers')) return 'careers'
   return 'home'
+}
+
+const safePushState = (path: string) => {
+  if (typeof window === 'undefined') return
+
+  try {
+    if (window.location.href.startsWith('blob:')) return
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path)
+    }
+  } catch {
+    // Some preview environments, such as blob-based sandboxes, do not allow pushState.
+  }
 }
 
 const translations = {
@@ -90,6 +105,42 @@ const translations = {
       aurora: 'Aurora 本地物理节点',
       auroraItems: ['加拿大住宅 / 办公室 / 安全商业空间部署', '独享 Mac mini 真实物理硬件', '独立静态 IP / 固定网络出口', '一客一机，长期稳定运行'],
       cta: '查看技术架构详情'
+    },
+    nativeCompare: {
+      tag: '核心差异',
+      title: '拼出来的环境，和真实存在的环境，是两种东西。',
+      desc: '很多方案看起来一样：VPS + 住宅代理 + 远程电脑。但本质完全不同。',
+      leftTitle: '拼接方案（VPS + 住宅代理）',
+      leftItems: [
+        '设备在机房或云服务器中运行',
+        'IP 来自代理池，不是设备所在网络的真实出口',
+        '依赖中转、隧道或第三方路由',
+        '设备、IP、网络三者是分离的',
+        'IP 历史、质量、是否共享不可控'
+      ],
+      leftConclusion: '这是把多个组件临时拼出来的环境。',
+      rightTitle: 'Aurora 本地物理环境',
+      rightItems: [
+        '设备部署在加拿大本地真实空间',
+        'IP 来自设备所在网络，非代理池',
+        '无代理层、无中转拼接',
+        '设备、IP、位置天然一致',
+        '环境长期稳定存在'
+      ],
+      rightConclusion: '这是一个本来就在那里的真实环境。',
+      closing1: '你不是在用一个环境，你是在拼一个环境。',
+      closing2: '而 Aurora，是一个本来就在那里的环境。'
+    },
+    valueAnchor: {
+      tag: '价格逻辑',
+      title: '为什么不是几十块，而是 699？',
+      desc: 'VPS 卖的是一台机器，代理卖的是一个 IP。Aurora 提供的是一台固定设备、一个固定网络、一个长期一致的运行环境。',
+      points: [
+        ['VPS', '买到的是算力和远程系统，不是本地身份环境。'],
+        ['住宅代理', '买到的是一个出口地址，但设备和网络并不天然一致。'],
+        ['Aurora Site', '买到的是固定设备 + 固定网络 + 长期一致的使用状态。']
+      ],
+      closing: '便宜方案卖的是“能用”。Aurora 卖的是“稳定、可预期、少变化”。'
     },
     pricing: {
       tag: '方案定价',
@@ -330,6 +381,42 @@ const translations = {
       aurora: 'Aurora local physical node',
       auroraItems: ['Hosted in Canadian residential, office, or secure commercial sites', 'Real dedicated Mac mini hardware', 'Dedicated static IP / fixed network access', 'One client, one environment for long-term use'],
       cta: 'View technical architecture'
+    },
+    nativeCompare: {
+      tag: 'Core Difference',
+      title: 'A constructed setup and a native environment are not the same thing.',
+      desc: 'Many setups combine cloud servers, residential proxies, and remote devices to simulate a local environment. But that is fundamentally different from a physically consistent environment.',
+      leftTitle: 'Constructed Setup (VPS + Residential Proxy)',
+      leftItems: [
+        'Device runs in a datacenter or cloud server',
+        'IP comes from a proxy network, not the device’s own local network',
+        'Connection depends on routing, tunneling, or third-party layers',
+        'Device, IP, and network are separated',
+        'IP history, quality, and sharing status depend on third parties'
+      ],
+      leftConclusion: 'A setup assembled from separate components.',
+      rightTitle: 'Aurora Native Environment',
+      rightItems: [
+        'Device is physically located in Canada',
+        'IP comes from the device’s own local network',
+        'No proxy layer or routing workaround',
+        'Device, network, and location are naturally aligned',
+        'Environment remains consistent over time'
+      ],
+      rightConclusion: 'A single, physically consistent environment.',
+      closing1: 'Most solutions combine components.',
+      closing2: 'Aurora provides an environment.'
+    },
+    valueAnchor: {
+      tag: 'Pricing Logic',
+      title: 'Why it’s not $50, but $699.',
+      desc: 'With a VPS, you get compute. With a proxy, you get an IP. With Aurora, you get a complete operating environment: a fixed device, a fixed network, and a consistent setup over time.',
+      points: [
+        ['VPS', 'You get compute and remote access, not a native local operating environment.'],
+        ['Residential proxy', 'You get an exit IP, but the device and network are not naturally linked.'],
+        ['Aurora Site', 'You get a fixed device, fixed network, and long-term operational consistency.']
+      ],
+      closing: 'Cheap setups provide access. Aurora provides consistency and predictability.'
     },
     pricing: {
       tag: 'Pricing',
@@ -670,9 +757,7 @@ export default function App() {
     setPage(target)
     setMenuOpen(false)
 
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState(null, '', nextPath)
-    }
+    safePushState(nextPath)
 
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -690,9 +775,7 @@ export default function App() {
     if (page !== 'home') {
       setPage('home')
 
-      if (window.location.pathname !== '/') {
-        window.history.pushState(null, '', '/')
-      }
+      safePushState('/')
 
       setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 50)
     } else {
@@ -705,7 +788,7 @@ export default function App() {
   return (
     <div className={`min-h-screen bg-[#F5F7F6] text-[#0d1b16] ${privacyOpen ? 'overflow-hidden' : ''}`}>
       <header className="sticky top-0 z-50 border-b border-black/5 bg-[#F5F7F6]/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
           <button onClick={() => go('home')} className="flex items-center gap-3 text-left">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A3D2E] text-white">
               <Monitor className="h-5 w-5" />
@@ -756,7 +839,7 @@ export default function App() {
       {page === 'architecture' && <ArchitecturePage t={t} scrollTo={scrollTo} />}
       {page === 'careers' && <CareersPage t={t} togglePrivacy={togglePrivacy} />}
 
-      <footer className="border-t border-black/5 px-5 py-12 text-center bg-white">
+      <footer className="border-t border-black/5 bg-white px-6 py-14 text-center lg:px-8">
         <div className="mb-6 flex justify-center space-x-6 text-xs font-bold uppercase tracking-widest text-black/35">
           <button onClick={togglePrivacy} className="hover:text-[#0A3D2E] transition-colors uppercase">{t.privacy.title}</button>
           <span className="opacity-20">|</span>
@@ -798,14 +881,14 @@ export default function App() {
 function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) {
   return (
     <main>
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-20 pt-16 lg:grid-cols-[1.05fr_.95fr] lg:pt-24">
+      <section className="mx-auto grid max-w-6xl gap-12 px-6 pb-28 pt-20 lg:grid-cols-[1.02fr_.98fr] lg:px-8 lg:pt-28">
         <div>
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
             <span className="h-2 w-2 rounded-full bg-[#D32F2F]" />
             {t.hero.tag}
           </div>
 
-          <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] text-[#07130f] md:text-7xl">
+          <h1 className="max-w-4xl text-5xl font-black leading-[0.98] tracking-[-0.055em] text-[#07130f] md:text-6xl lg:text-7xl">
             {lang === 'zh' ? (
               <>
                 加拿大独享 Mac mini 设备<br />
@@ -819,7 +902,7 @@ function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) 
             )}
           </h1>
 
-          <p className="mt-8 max-w-2xl text-xl leading-8 text-black/60">{t.hero.desc}</p>
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-black/58 md:text-xl">{t.hero.desc}</p>
           <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#0A3D2E]">{t.hero.punch}</p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">{t.hero.note}</p>
 
@@ -880,14 +963,14 @@ function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) 
         </div>
       </section>
 
-      <section id="solution" className="mx-auto max-w-7xl px-5 py-20">
+      <section id="solution" className="mx-auto max-w-5xl px-6 py-24 lg:px-8">
         <div className="mb-12 max-w-3xl">
           <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.solution.tag}</div>
-          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.solution.title}</h2>
+          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{t.solution.title}</h2>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {[t.solution.card1, t.solution.card2, t.solution.card3].map(([title, desc, Icon]: any) => (
-            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-8 shadow-sm group hover:border-[#0A3D2E]/20 transition-colors">
+            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-7 shadow-sm group hover:border-[#0A3D2E]/20 transition-colors">
               <Icon className="mb-8 h-9 w-9 text-[#2F7D5B]" />
               <h3 className="text-2xl font-black group-hover:text-[#0A3D2E] transition-colors">{title}</h3>
               <p className="mt-4 leading-7 text-black/55">{desc}</p>
@@ -898,46 +981,21 @@ function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) 
 
       <UseCasesSection t={t} />
 
-      <section id="compare" className="mx-auto max-w-7xl px-5 py-20">
-        <div className="overflow-hidden rounded-[2.5rem] bg-[#0B1411] p-6 text-white md:p-10 border border-white/5">
-          <div className="mb-10 max-w-3xl">
-            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{t.compare.title}</h2>
-            <p className="mt-5 text-lg text-white/55">{t.compare.desc}</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              [t.compare.vps, t.compare.vpsItems],
-              [t.compare.aurora, t.compare.auroraItems],
-            ].map(([title, items]: any) => (
-              <article key={title} className={`rounded-[2rem] border p-7 ${title === t.compare.aurora ? 'border-[#2F7D5B]/30 bg-[#2F7D5B]/10' : 'border-white/10 bg-white/5'}`}>
-                <h3 className="mb-6 text-2xl font-black">{title}</h3>
-                {items.map((x: string) => (
-                  <div key={x} className="flex items-center gap-3 border-t border-white/10 py-4">
-                    <CheckCircle2 className={`h-5 w-5 ${title === t.compare.aurora ? 'text-[#2F7D5B]' : 'text-white/30'}`} />
-                    <span className="font-semibold text-white/80">{x}</span>
-                  </div>
-                ))}
-              </article>
-            ))}
-          </div>
-          <button onClick={() => go('architecture')} className="mt-8 inline-flex items-center rounded-full bg-white px-6 py-4 font-black text-[#0B1411] hover:bg-[#D32F2F] hover:text-white transition-all">
-            {t.compare.cta} <ChevronRight className="ml-2 h-5 w-5" />
-          </button>
-        </div>
-      </section>
+      <ConversionCompareSection lang={lang} t={t} go={go} />
+      <ValueAnchorSection t={t} />
 
-      <section id="pricing" className="mx-auto max-w-7xl px-5 py-20">
+      <section id="pricing" className="mx-auto max-w-5xl px-6 py-24 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr]">
           <div>
             <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.pricing.tag}</div>
-            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.pricing.title}</h2>
+            <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{t.pricing.title}</h2>
             <p className="mt-6 text-lg leading-8 text-black/55">{t.pricing.desc}</p>
           </div>
           <article className="rounded-[2.5rem] border-2 border-[#D32F2F]/10 bg-white p-8 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 h-32 w-32 bg-[#D32F2F]/5 rounded-bl-full -mr-10 -mt-10" />
             <div className="mb-6 inline-flex rounded-full bg-[#ffe5e5] px-4 py-2 text-sm font-black text-[#D32F2F]">{t.pricing.planName}</div>
             <div className="flex items-end gap-3">
-              <span className="text-6xl font-black tracking-[-0.06em] text-[#D32F2F]">{t.pricing.price}</span>
+              <span className="text-5xl font-black tracking-[-0.055em] text-[#D32F2F] md:text-6xl">{t.pricing.price}</span>
               <span className="pb-3 text-lg font-bold text-black/50">{t.pricing.unit}</span>
             </div>
             <div className="mt-8 grid gap-4">
@@ -960,17 +1018,184 @@ function HomePage({ lang, t, sent, setSent, scrollTo, go, togglePrivacy }: any) 
   )
 }
 
+function ConversionCompareSection({ lang, go }: any) {
+  const zh = lang === 'zh'
+  const data = zh
+    ? {
+        eyebrow: '核心对比',
+        title: '不是 VPS 加代理贵不贵的问题，是不是同一个东西的问题。',
+        desc: '便宜方案解决的是“能连上”。Aurora 解决的是“设备、网络、位置长期一致”。这两者不是同一类产品。',
+        leftLabel: '常见拼接方案',
+        leftTitle: 'VPS / 云主机 + 住宅代理',
+        leftSub: '看起来像本地环境，实际是几个组件拼在一起。',
+        leftPoints: [
+          ['设备不在本地', '运行环境通常在机房、云服务器或远程桌面里。'],
+          ['IP 不是设备真实出口', '住宅代理只是把出口地址换掉，设备和网络并不天然同源。'],
+          ['中间层太多', '云主机、代理池、隧道、第三方路由，任何一层变化都会影响稳定性。'],
+          ['长期一致性弱', 'IP 历史、共享情况、路由质量和变更节奏不完全由你控制。']
+        ],
+        leftClose: '本质：这是一个“模拟出来的加拿大环境”。',
+        rightLabel: 'Aurora Site',
+        rightTitle: '加拿大本地物理环境',
+        rightSub: '不是模拟一个位置，而是设备本来就在这个位置。',
+        rightPoints: [
+          ['设备在加拿大本地空间', 'Mac mini 真实部署在加拿大住宅、办公室或安全商业空间。'],
+          ['IP 来自设备所在网络', '固定网络出口与设备位置一致，不靠代理池拼接。'],
+          ['无代理层、无中转拼接', '设备、网络和位置天然绑定，结构更简单。'],
+          ['适合长期运营', '一客一机，一个稳定存在的操作位置。']
+        ],
+        rightClose: '本质：这是一个“真实存在的加拿大操作环境”。',
+        punch: '你不是少买一个代理，你是在少买一个长期一致的操作位置。',
+        priceTitle: '为什么它值 699？',
+        priceText: 'VPS 卖算力，代理卖出口。Aurora 卖的是固定设备、固定网络和长期一致的使用状态。便宜方案卖“能用”，Aurora 卖“稳定、可预期、少变化”。',
+        cta: '查看技术架构'
+      }
+    : {
+        eyebrow: 'Core Difference',
+        title: 'This is not about VPS price. It is about whether the setup is the same category.',
+        desc: 'Cheap setups provide access. Aurora provides a consistent device, network, and operating location over time. These are not the same product.',
+        leftLabel: 'Common Combined Setup',
+        leftTitle: 'VPS / Cloud Server + Residential Proxy',
+        leftSub: 'It may look local, but it is assembled from separate components.',
+        leftPoints: [
+          ['Device is not local', 'The working environment usually runs in a datacenter, cloud server, or remote desktop.'],
+          ['IP is not the device’s own network', 'A residential proxy changes the exit address, but the device and network are not naturally aligned.'],
+          ['Too many middle layers', 'Cloud hosting, proxy pool, tunneling, and third-party routing can all affect consistency.'],
+          ['Weak long-term consistency', 'IP history, sharing status, routing quality, and changes depend on third-party providers.']
+        ],
+        leftClose: 'In short: it is a simulated local environment.',
+        rightLabel: 'Aurora Site',
+        rightTitle: 'Canadian Local Physical Environment',
+        rightSub: 'It does not simulate a location. The device is physically there.',
+        rightPoints: [
+          ['Device physically in Canada', 'A real Mac mini is hosted in a Canadian residential, office, or secure commercial site.'],
+          ['IP comes from the local network', 'The network exit is aligned with the device location, without relying on a proxy pool.'],
+          ['No proxy layer or stitched route', 'Device, network, and location are naturally aligned in one setup.'],
+          ['Built for long-term operations', 'One client, one device, one persistent operating location.']
+        ],
+        rightClose: 'In short: it is a real Canadian operating environment.',
+        punch: 'You are not just buying access. You are buying a persistent operating location.',
+        priceTitle: 'Why $699?',
+        priceText: 'A VPS sells compute. A proxy sells an exit address. Aurora provides a fixed device, fixed network, and consistent setup over time. Cheap setups provide access; Aurora provides stability, predictability, and consistency.',
+        cta: 'View technical architecture'
+      }
+
+  return (
+    <section id="compare" className="mx-auto max-w-6xl px-6 py-24 lg:px-8">
+      <div className="overflow-hidden rounded-[3rem] bg-[#0B1411] p-7 text-white shadow-2xl md:p-10 lg:p-12">
+        <div className="mb-10 max-w-5xl">
+          <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#7DD9A7]">{data.eyebrow}</div>
+          <h2 className="max-w-5xl text-4xl font-black leading-[0.95] tracking-[-0.06em] md:text-5xl lg:text-6xl">
+            {data.title}
+          </h2>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-white/58">{data.desc}</p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <article className="rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-7 md:p-8">
+            <div className="mb-6 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/60">
+              {data.leftLabel}
+            </div>
+            <h3 className="text-3xl font-black tracking-[-0.04em] md:text-4xl">{data.leftTitle}</h3>
+            <p className="mt-3 leading-7 text-white/45">{data.leftSub}</p>
+            <div className="mt-8 grid gap-4">
+              {data.leftPoints.map(([title, desc]: any) => (
+                <div key={title} className="rounded-3xl border border-white/10 bg-black/15 p-5">
+                  <div className="flex items-center gap-3 text-lg font-black text-white/85">
+                    <X className="h-5 w-5 shrink-0 text-[#D32F2F]" />
+                    {title}
+                  </div>
+                  <p className="mt-2 pl-8 leading-7 text-white/45">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 rounded-3xl border border-white/10 bg-white/10 p-5 text-lg font-black leading-8 text-white/75">
+              {data.leftClose}
+            </div>
+          </article>
+
+          <article className="relative overflow-hidden rounded-[2.5rem] border border-[#7DD9A7]/25 bg-[#0A3D2E] p-7 shadow-xl shadow-[#0A3D2E]/30 md:p-8">
+            <div className="absolute right-0 top-0 h-40 w-40 rounded-bl-full bg-[#7DD9A7]/10" />
+            <div className="relative mb-6 inline-flex rounded-full bg-[#7DD9A7]/15 px-4 py-2 text-sm font-black text-[#B8F5D4]">
+              {data.rightLabel}
+            </div>
+            <h3 className="relative text-3xl font-black tracking-[-0.04em] md:text-4xl">{data.rightTitle}</h3>
+            <p className="relative mt-3 leading-7 text-white/60">{data.rightSub}</p>
+            <div className="relative mt-8 grid gap-4">
+              {data.rightPoints.map(([title, desc]: any) => (
+                <div key={title} className="rounded-3xl border border-white/10 bg-white/10 p-5">
+                  <div className="flex items-center gap-3 text-lg font-black text-white">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-[#7DD9A7]" />
+                    {title}
+                  </div>
+                  <p className="mt-2 pl-8 leading-7 text-white/62">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="relative mt-6 rounded-3xl border border-[#7DD9A7]/25 bg-[#7DD9A7]/12 p-5 text-lg font-black leading-8 text-white">
+              {data.rightClose}
+            </div>
+          </article>
+        </div>
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+          <div className="rounded-[2rem] border border-[#7DD9A7]/20 bg-[#7DD9A7]/10 p-7">
+            <p className="text-2xl font-black leading-tight tracking-[-0.04em] text-white md:text-4xl">{data.punch}</p>
+          </div>
+          <div className="rounded-[2rem] border border-white/10 bg-white p-7 text-[#0d1b16]">
+            <div className="mb-3 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{data.priceTitle}</div>
+            <p className="text-lg font-bold leading-8 text-black/68">{data.priceText}</p>
+          </div>
+        </div>
+
+        <button onClick={() => go('architecture')} className="mt-8 inline-flex items-center rounded-full bg-white px-6 py-4 font-black text-[#0B1411] transition-all hover:bg-[#D32F2F] hover:text-white">
+          {data.cta} <ChevronRight className="ml-2 h-5 w-5" />
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function ValueAnchorSection({ t }: any) {
+  const va = t.valueAnchor
+
+  return (
+    <section className="mx-auto max-w-5xl px-6 py-16 lg:px-8">
+      <div className="grid gap-8 rounded-[3rem] border border-[#D32F2F]/10 bg-[#fff7f7] p-7 shadow-sm md:p-10 lg:grid-cols-[.95fr_1.05fr]">
+        <div>
+          <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{va.tag}</div>
+          <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{va.title}</h2>
+          <p className="mt-6 text-lg leading-8 text-black/60">{va.desc}</p>
+        </div>
+
+        <div className="grid gap-4">
+          {va.points.map(([title, desc]: any) => (
+            <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-6 shadow-sm">
+              <div className="mb-2 text-xl font-black text-[#0A3D2E]">{title}</div>
+              <p className="leading-7 text-black/60">{desc}</p>
+            </article>
+          ))}
+          <div className="rounded-[2rem] bg-[#0A3D2E] p-6 text-xl font-black leading-8 text-white shadow-xl shadow-[#0A3D2E]/15">
+            {va.closing}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+
 function UseCasesSection({ t }: any) {
   return (
-    <section className="mx-auto max-w-7xl px-5 py-20 bg-white rounded-[4rem] border border-black/5 shadow-sm">
-      <div className="mb-12 max-w-4xl px-5">
+    <section className="mx-auto max-w-5xl rounded-[3rem] border border-black/5 bg-white px-6 py-24 shadow-sm lg:px-8">
+      <div className="mb-14 max-w-3xl">
         <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{t.useCases.tag}</div>
-        <h2 className="text-4xl font-black tracking-[-0.04em] md:text-6xl">{t.useCases.title}</h2>
+        <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{t.useCases.title}</h2>
         <p className="mt-6 max-w-3xl text-lg leading-8 text-black/55">{t.useCases.desc}</p>
       </div>
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 px-5">
+      <div className="grid gap-5 md:grid-cols-2">
         {t.useCases.items.map(([title, desc, Icon]: any) => (
-          <article key={title} className="rounded-[2rem] border border-black/5 bg-[#F5F7F6] p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:border-[#0A3D2E]/10">
+          <article key={title} className="rounded-[2rem] border border-black/5 bg-[#F5F7F6] p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:border-[#0A3D2E]/10">
             <Icon className="mb-6 h-8 w-8 text-[#2F7D5B]" />
             <h3 className="text-xl font-black">{title}</h3>
             <p className="mt-4 leading-7 text-black/55 text-sm">{desc}</p>
@@ -985,13 +1210,13 @@ function ArchitecturePage({ t, scrollTo }: any) {
   const at = t.archPage
   return (
     <main>
-      <section className="mx-auto max-w-7xl px-5 py-20 lg:py-28">
+      <section className="mx-auto max-w-6xl px-6 py-24 lg:px-8 lg:py-32">
         <div className="max-w-4xl">
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
             <Router className="h-4 w-4" />
             {at.tag}
           </div>
-          <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
+          <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] md:text-6xl lg:text-7xl">
             {at.title}<br />
             <span className="text-[#0A3D2E]">{at.titleHighlight}</span>
           </h1>
@@ -999,7 +1224,7 @@ function ArchitecturePage({ t, scrollTo }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 pb-20">
+      <section className="mx-auto max-w-6xl px-6 pb-24 lg:px-8">
         <div className="rounded-[3rem] bg-[#0B1411] p-6 text-white md:p-10 border border-white/5">
           <div className="grid gap-5 lg:grid-cols-4">
             {at.cards.map(([title, desc, Icon]: any) => (
@@ -1013,7 +1238,7 @@ function ArchitecturePage({ t, scrollTo }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16">
+      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
           <div>
             <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{at.flowTitle}</div>
@@ -1034,7 +1259,7 @@ function ArchitecturePage({ t, scrollTo }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16">
+      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <div className="mb-10 max-w-3xl">
           <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Infrastructure</div>
           <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{at.infraTitle}</h2>
@@ -1050,7 +1275,7 @@ function ArchitecturePage({ t, scrollTo }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-20">
+      <section className="mx-auto max-w-6xl px-6 py-24 lg:px-8">
         <div className="rounded-[3rem] bg-white p-8 shadow-xl md:p-12 border border-black/5">
           <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
             <div>
@@ -1079,13 +1304,13 @@ function CareersPage({ t, togglePrivacy }: any) {
   const ct = t.careers
   return (
     <main>
-      <section className="mx-auto max-w-7xl px-5 py-20 lg:py-28">
+      <section className="mx-auto max-w-6xl px-6 py-24 lg:px-8 lg:py-32">
         <div className="max-w-4xl">
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D32F2F]/10 bg-white px-4 py-2 text-sm font-bold text-[#D32F2F] shadow-sm">
             <Users className="h-4 w-4" />
             {ct.tag}
           </div>
-          <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
+          <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] md:text-6xl lg:text-7xl">
             {ct.title}<br />
             <span className="text-[#0A3D2E]">{ct.titleHighlight}</span>
           </h1>
@@ -1093,7 +1318,7 @@ function CareersPage({ t, togglePrivacy }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 pb-20">
+      <section className="mx-auto max-w-6xl px-6 pb-24 lg:px-8">
         <div className="grid gap-5 md:grid-cols-4">
           {ct.cards.map(([title, desc, Icon]: any) => (
             <article key={title} className="rounded-[2rem] border border-black/5 bg-white p-7 shadow-sm hover:border-[#0A3D2E]/20 transition-colors">
@@ -1105,7 +1330,7 @@ function CareersPage({ t, togglePrivacy }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16">
+      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-2">
           <article className="rounded-[2.5rem] bg-white p-8 shadow-xl border border-black/5">
             <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">Type 1</div>
@@ -1137,7 +1362,7 @@ function CareersPage({ t, togglePrivacy }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16">
+      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <div className="mb-10 max-w-3xl">
           <div className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-[#D32F2F]">{ct.whoSub}</div>
           <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">{ct.whoTitle}</h2>
@@ -1164,7 +1389,7 @@ function CareersPage({ t, togglePrivacy }: any) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16">
+      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <div className="rounded-[3rem] bg-white p-8 shadow-xl md:p-12 border border-black/5">
           <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
             <div>
@@ -1214,21 +1439,54 @@ function CareersPage({ t, togglePrivacy }: any) {
 
 function ContactSection({ t, sent, setSent, togglePrivacy }: any) {
   const ct = t.contact
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json'
+        }
+      })
+
+      if (res.ok) {
+        setSent(true)
+        form.reset()
+      } else {
+        alert('提交失败，请直接邮件联系 contact@aurorasitesolutions.com')
+      }
+    } catch {
+      alert('网络错误，请稍后再试')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <section id="contact" className="px-5 py-24">
-      <div className="mx-auto max-w-4xl rounded-[3rem] bg-[#0B1411] p-8 text-white shadow-2xl md:p-12 border border-white/5">
+    <section id="contact" className="px-6 py-28 lg:px-8">
+      <div className="mx-auto max-w-3xl rounded-[3rem] bg-[#0B1411] p-8 text-white shadow-2xl md:p-12 border border-white/5">
         {!sent ? (
           <>
             <h2 className="text-4xl font-black tracking-[-0.04em] md:text-5xl">
               {ct.title.split('?')[0]}<span className="text-[#D32F2F]">?</span>
             </h2>
             <p className="mt-5 text-lg leading-8 text-white/65">{ct.desc}</p>
-            <form className="mt-10 grid gap-4" onSubmit={(e) => { e.preventDefault(); setSent(true) }}>
-              <input required placeholder={ct.form.name} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
-              <input required placeholder={ct.form.contact} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
-              <textarea required placeholder={ct.form.message} rows={5} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+            <form className="mt-10 grid gap-4" onSubmit={handleSubmit}>
+              <input type="hidden" name="source" value="aurora-site" />
+              <input name="name" required placeholder={ct.form.name} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+              <input name="contact" required placeholder={ct.form.contact} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
+              <textarea name="message" required placeholder={ct.form.message} rows={5} className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 font-semibold outline-none placeholder:text-white/40 focus:border-[#2F7D5B]/50 transition-colors" />
               <div className="flex items-start gap-3 px-2 py-4">
-                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
+                <input required type="checkbox" name="privacy_agreed" value="yes" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
                 <label className="text-xs leading-normal text-white/50">
                   {t.privacy.checkbox}{' '}
                   <button type="button" onClick={togglePrivacy} className="font-bold text-white underline">
@@ -1237,10 +1495,10 @@ function ContactSection({ t, sent, setSent, togglePrivacy }: any) {
                 </label>
               </div>
               <div className="flex items-start gap-3 px-2 py-4">
-                <input required type="checkbox" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
+                <input required type="checkbox" name="compliance_confirmed" value="yes" className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 text-[#2F7D5B] focus:ring-[#2F7D5B]" />
                 <label className="text-xs leading-normal text-white/50">{t.privacy.useCheckbox}</label>
               </div>
-              <button className="rounded-3xl bg-[#0A3D2E] px-8 py-5 text-lg font-black text-white hover:bg-[#D32F2F] shadow-xl shadow-[#0A3D2E]/20 transition-all">
+              <button type="submit" aria-busy={isSubmitting} className="rounded-3xl bg-[#0A3D2E] px-8 py-5 text-lg font-black text-white hover:bg-[#D32F2F] shadow-xl shadow-[#0A3D2E]/20 transition-all">
                 {ct.form.submit}
               </button>
             </form>
@@ -1255,7 +1513,7 @@ function ContactSection({ t, sent, setSent, togglePrivacy }: any) {
             <h2 className="text-4xl font-black">{ct.successTitle}</h2>
             <p className="mt-4 text-white/65">{ct.successDesc}</p>
             <button onClick={() => setSent(false)} className="mt-8 font-black underline underline-offset-8 text-[#2F7D5B] hover:text-white transition-colors">
-              {t.contact.resend}
+              {ct.resend}
             </button>
           </div>
         )}
